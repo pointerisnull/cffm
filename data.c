@@ -23,7 +23,7 @@ void readDir(char *pathIn, Directory *dir) {
   char *filePath = adjustDirPath(pathIn);
   DIR *dr = NULL;
   dir->doNotUse = 1;
-  dir->path = malloc(sizeof(char)*MAXPATHNAME);
+  //dir->path = malloc(sizeof(char)*MAXPATHNAME);
   //if(dir == NULL) dir = malloc(sizeof(Directory));
   if(filePath != NULL)  dr = opendir(filePath);
   
@@ -107,6 +107,7 @@ void readDir(char *pathIn, Directory *dir) {
       if(strcmp(temp, dir->folders[i].path) == 0)
         dir->selected = i;
     }
+    //strcat(dir->path, "/");
   } else {
     dir->selected = 0;
   }
@@ -185,7 +186,7 @@ int isDirectory(const char *path)
 
 char *getHeaderDirPath(char *input) {
   if(strcmp(input, "/") == 0) {
-    printf("Nothing above root.\n");
+  //  printf("Nothing above root.\n");
     return input;
   }
   //get the index of the last '/'
@@ -223,19 +224,24 @@ char *adjustDirPath(char *input) {
     //temp[strlen(temp)] = ' ';
     return temp;
   }
+  free(temp);
+  return input;
+  /*
   int slashCount = 0;
   for(int i = 0; i < strlen(input); i++)
     if(input[i] == '/') slashCount++;
   if(slashCount != 0) {
     free(temp);
-    char* newTemp = malloc(MAXPATHNAME);
-    strncpy(newTemp, input, strlen(input));
-    return newTemp;
+    //char* newTemp = malloc(MAXPATHNAME);
+    //strncpy(newTemp, input, strlen(input));
+    //return newTemp;
+    return input;
   } else {
-    strncpy(temp, "/", 2);
-    strncat(temp, input, strlen(input));
-    return temp;
-  }
+    //strncpy(temp, "/", 2);
+    //strncat(temp, input, strlen(input));
+    //return temp;
+    return "LOLLL";
+  } */
 }
 
 void getDirectoryCounts(int *folderCount, int *fileCount, char *fp) {

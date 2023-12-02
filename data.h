@@ -35,7 +35,7 @@ struct Directory {
   Folder *folders;
   File *files;
   char name[MAXFILENAME];
-  char *path; //[MAXPATHNAME];
+  char path[MAXPATHNAME];
   int folderCount;
   int fileCount;
   int selected;
