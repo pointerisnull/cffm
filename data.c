@@ -40,7 +40,6 @@ void readDir(const char *filePath, Directory *dir) {
  
   dir->folders = malloc(sizeof(Folder)*dir->folderCount+1);
   dir->files = malloc(sizeof(File)*dir->fileCount+1);
-  printf("HERE: %s\n", filePath);
   /*open directory*/
   struct dirent *de = NULL;
   //crashes here sometimes, not sure why
