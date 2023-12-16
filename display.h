@@ -17,8 +17,8 @@ typedef struct Display {
 } Display;
 
 void checkUpdates(Display *dis);
-void initDisplay(Display *dis, Directory *dir);//WINDOW *leftWin, WINDOW *mainWin, WINDOW *rightWin);
-void display(Display *dis, Directory **dir); //WINDOW *leftWin, WINDOW *mainWin, WINDOW *rightWin);
+void initDisplay(Display *dis, Directory *dir);
+void display(Display *dis, Directory **dir);
 void killDisplay();
 
 #endif

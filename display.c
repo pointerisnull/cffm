@@ -17,11 +17,6 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
             dir->parent->folders[dir->parent->selected].subdir = temp;
           }
           temp = dir->parent;
-          if(temp->parent == NULL) {
-            /*
-            temp->parent = malloc(sizeof(Directory));
-            readDir("..", temp->parent); */
-          } 
           *dirptr = temp;
         }
       }
@@ -83,16 +78,16 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
   }
 }
 
-void initDisplay(Display *dis, Directory *dir) { //WINDOW *leftWin, WINDOW *mainWin, WINDOW *rightWin) {
-	initscr();			/* Start curses mode 		  */
+void initDisplay(Display *dis, Directory *dir) {	
+  initscr();
   cbreak();
   curs_set(0);
   nodelay(dis->mainWin, TRUE);
   if(has_colors()) start_color();
   use_default_colors();
-  init_pair(1, COLOR_GREEN, -1);//  COLOR_BLACK);
-  init_pair(2, COLOR_WHITE, -1); //COLOR_BLACK);
-  init_pair(3, COLOR_MAGENTA, -1); // COLOR_BLACK);
+  init_pair(1, COLOR_GREEN, -1);
+  init_pair(2, COLOR_WHITE, -1);
+  init_pair(3, COLOR_MAGENTA, -1);
   //assume_default_colors(3);
   dis->mainWinWidth = COLS/2 - (COLS/8);
   dis->leftWinWidth = COLS/8;
@@ -142,18 +137,18 @@ void checkUpdates(Display *dis) {
 
 void display(Display *dis, Directory **dirptr) {
   Directory *dir = *dirptr;
-	//char filePath[4096];
   WINDOW *leftWin = dis->leftWin;
   WINDOW *mainWin = dis->mainWin;
   WINDOW *rightWin = dis->rightWin;
   Directory *top = dir->parent;
+  
   werase(leftWin);
   werase(mainWin);
   werase(rightWin);
  
   attron(A_BOLD);
   attron(COLOR_PAIR(1));
-  //if(getcwd(filePath, sizeof(filePath)) != NULL) 
+
   if(dir->selected < dir->folderCount) printw("%s", dir->folders[dir->selected].path);
   else if(dir->selected < (dir->folderCount + dir->fileCount)) printw("%s", dir->files[dir->selected - dir->folderCount].path);
 
@@ -256,12 +251,12 @@ void display(Display *dis, Directory **dirptr) {
     }
   }
 
-  refresh();			/* Print it on to the real screen */
+  refresh();  
   wrefresh(leftWin);
   wrefresh(rightWin);
   wrefresh(mainWin);
-
-  int key = wgetch(mainWin);			/* Wait for user input */
+  /*wait for user input*/
+  int key = wgetch(mainWin);
   if(key != ERR) handleInput(key, dis, dir, dirptr);
 
   attroff(COLOR_PAIR(1));
@@ -271,5 +266,5 @@ void display(Display *dis, Directory **dirptr) {
 }
 
 void killDisplay() {
-	endwin();			/* End curses mode		  */
+	endwin();
 }

@@ -20,10 +20,9 @@ int main() {
 
   state.isRunning = 1;
   state.showHidden = 0;
-  state.showBorder = 1;
+  state.showBorder = 0;
 
   Directory *directory = initDirectories();
-  printf("Directory Path: %s\n", directory->path);
   
   initDisplay(window, directory);
   while(state.isRunning) {
@@ -31,6 +30,7 @@ int main() {
     display(window, &directory);
   }
 	killDisplay();
+  
   /*
   directory->parent->files = NULL;
   free(directory->parent->files);
