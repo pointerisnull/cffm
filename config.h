@@ -2,8 +2,10 @@
 #define CONFIG_H
 
 typedef struct State {
-  int showHidden;
+  int isRunning;
   int hasChangedDir;
+  int showHidden;
+  int showBorder;
 } State;
 
 extern State state;

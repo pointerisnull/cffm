@@ -5,11 +5,12 @@
 #include <unistd.h>
 #include <string.h>
 #include "display.h"
+#include "config.h"
 
 void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
   switch(key) {
     case 'h':
-      if(strcmp(dir->path, "/") != 0) {
+      if(strncmp(dir->path, "/", 2) != 0) {
         if(chdir("..") == 0) {
           Directory *temp = dir;
           if(dir->parent->selected < dir->parent->folderCount && dir->parent->folders[dir->parent->selected].subdir == NULL) {
@@ -17,9 +18,10 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
           }
           temp = dir->parent;
           if(temp->parent == NULL) {
+            /*
             temp->parent = malloc(sizeof(Directory));
-            readDir("..", temp->parent);
-          }
+            readDir("..", temp->parent); */
+          } 
           *dirptr = temp;
         }
       }
@@ -45,11 +47,6 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
           temp->parent = dir;
           dir->folders[dir->selected].subdir = temp;
         }
-      //  dir->folders[dir->selected].subdir = malloc(sizeof(Directory));
-      //  if(dir->folders[dir->selected].subdir->parent != NULL) {
-       //   dir->folders[dir->selected].subdir->parent = dir;
-       //   if(dir->folders[dir->selected].subdir->path == NULL) readDir(dir->folders[dir->selected].path, dir->folders[dir->selected].subdir);
-       // }
       }
       break;
     case 'l':
@@ -58,18 +55,31 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
         if(dir->folders[dir->selected].subdir != NULL) {
           Directory *temp = dir;
           if(chdir(dir->folders[dir->selected].path) == 0) {
-          //  dir->parent->folders[dir->parent->selected].subdir = temp;
-          //}
             temp = dir->folders[dir->selected].subdir;
-          //temp->parent = malloc(sizeof(Directory));
-          //readDir("..", temp->parent);
             *dirptr = temp;
           }
+          //if new dir, read next
+          if(temp->selected < temp->folderCount && (temp->folders[temp->selected].subdir == NULL)) {
+            Directory *subtemp = malloc(sizeof(Directory));
+            readDir(temp->folders[temp->selected].path, subtemp);
+            if(subtemp->doNotUse == 0) {
+              subtemp->parent = temp;
+              temp->folders[temp->selected].subdir = subtemp;
+            }
+          }
+          //
         } 
       }
       break;
+    case 'b':
+      state.showBorder = state.showBorder == 1 ? 0 : 1; 
+      break;
+    case 'q':
+      state.isRunning = 0;
+      break;
     default:
       break;
+
   }
 }
 
@@ -144,17 +154,21 @@ void display(Display *dis, Directory **dirptr) {
   attron(A_BOLD);
   attron(COLOR_PAIR(1));
   //if(getcwd(filePath, sizeof(filePath)) != NULL) 
-  if(dir->selected <= dir->folderCount) printw("%s", dir->folders[dir->selected].path);
-  
-  wattron(mainWin, COLOR_PAIR(3));
-  wattron(leftWin, COLOR_PAIR(3));
-  wattron(rightWin, COLOR_PAIR(3));
-  box(leftWin, 0, 0);
-  box(mainWin, 0, 0);
-  box(rightWin, 0, 0);
-  wattroff(mainWin, COLOR_PAIR(3));
-  wattroff(leftWin, COLOR_PAIR(3));
-  wattroff(rightWin, COLOR_PAIR(3)); 
+  if(dir->selected < dir->folderCount) printw("%s", dir->folders[dir->selected].path);
+  else if(dir->selected < (dir->folderCount + dir->fileCount)) printw("%s", dir->files[dir->selected - dir->folderCount].path);
+
+  if(state.showBorder) {
+    wattron(mainWin, COLOR_PAIR(3));
+    wattron(leftWin, COLOR_PAIR(3));
+    wattron(rightWin, COLOR_PAIR(3));
+    box(leftWin, 0, 0);
+    box(mainWin, 0, 0);
+    box(rightWin, 0, 0);
+    wattroff(mainWin, COLOR_PAIR(3));
+    wattroff(leftWin, COLOR_PAIR(3));
+    wattroff(rightWin, COLOR_PAIR(3)); 
+  }
+ 
   /* display directories */
 
   char leftBuff[256];
@@ -185,7 +199,7 @@ void display(Display *dis, Directory **dirptr) {
     }
     wattroff(mainWin, COLOR_PAIR(2));
     wattroff(mainWin, COLOR_PAIR(3));
-    mvwchgat(mainWin, dir->selected+1, 1, dis->mainWinWidth-2, A_STANDOUT | A_BOLD, 3, NULL);
+    mvwchgat(mainWin, dir->selected+1, 1, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
   }
   if(dis->leftWinWidth-2 > 0) {
     wattron(leftWin, COLOR_PAIR(3));
@@ -207,8 +221,9 @@ void display(Display *dis, Directory **dirptr) {
       memset(leftBuff,0,255);
     }
     wattroff(leftWin, COLOR_PAIR(2));
-    mvwchgat(leftWin, top->selected+1, 1, dis->leftWinWidth-2, A_STANDOUT | A_BOLD, 3, NULL);
+    mvwchgat(leftWin, top->selected+1, 1, dis->leftWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
   }
+  
   if(dis->rightWinWidth-2 > 0) {
     if(dir->selected < dir->folderCount && dir->folders[dir->selected].subdir != NULL) {
       int folderCount = dir->folders[dir->selected].subdir->folderCount; 
@@ -237,7 +252,7 @@ void display(Display *dis, Directory **dirptr) {
         memset(rightBuff,0,255);
       }
       wattroff(leftWin, COLOR_PAIR(2)); 
-      mvwchgat(rightWin, dir->folders[dir->selected].subdir->selected+1, 1, dis->rightWinWidth-2, A_STANDOUT | A_BOLD, 3, NULL);
+      mvwchgat(rightWin, dir->folders[dir->selected].subdir->selected+1, 1, dis->rightWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
     }
   }
 

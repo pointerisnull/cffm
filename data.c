@@ -8,25 +8,22 @@
 #include <assert.h>
 #include "data.h"
 #include "config.h"
-
 /* utility functions */
 void getFileStats(File *file, const char *path);
 void getDirectoryCounts(int *folderCount, int *fileCount, char *fp);
 void sortFolders(Folder *folders, int count);
 void sortFiles(File *files, int count);
 int isDirectory(const char *path);
-char *getHeaderDirPath(char *input);
-char *adjustDirPath(char *input); 
-/* main function */
-void readDir(char *pathIn, Directory *dir) {
+
+void readDir(char *filePath, Directory *dir) {
   struct dirent *de = NULL;
-  char *filePath = adjustDirPath(pathIn);
   DIR *dr = NULL;
   dir->doNotUse = 1;
-  //dir->path = malloc(sizeof(char)*MAXPATHNAME);
-  //if(dir == NULL) dir = malloc(sizeof(Directory));
-  if(filePath != NULL)  dr = opendir(filePath);
-  
+  if(filePath != NULL) {  
+    dr = opendir(filePath);
+    memset(dir->path, '\0', MAXPATHNAME);
+    strncpy(dir->path, filePath, MAXPATHNAME);
+  }
   dir->parent = NULL;
   if (dr == NULL || filePath == NULL) {
     dir->selected = 0;
@@ -34,13 +31,12 @@ void readDir(char *pathIn, Directory *dir) {
     dir->fileCount = 1;
     dir->files = malloc(sizeof(File));
     dir->folders = NULL;
-    if(filePath != NULL) strncpy(dir->path, filePath, strlen(filePath));
-    if(strcmp(adjustDirPath("."), "/") == 0) strncpy(dir->files[0].name, "[rootfs]", 9);
+    if(filePath == NULL) strncpy(dir->files[0].name, "[ROOTFS]", 9);
     else strncpy(dir->files[0].name, "[EMPTY]", 8);
     if(filePath != NULL) printf("Could not open current directory: %s\n", filePath); 
-    return; 
+    return;
   }
-
+ 
   int fCount = 0;
   int dCount = 0;
 
@@ -51,28 +47,31 @@ void readDir(char *pathIn, Directory *dir) {
  
   dir->folders = malloc(sizeof(Folder)*dir->folderCount+1);
   dir->files = malloc(sizeof(File)*dir->fileCount+1);
- 
-  strncpy(dir->path, filePath, strlen(filePath));
-  if(strcmp(dir->path, filePath) != 0) strncpy(dir->path, filePath, strlen(filePath)+1);
-  if(strcmp(filePath, "/") != 0) strncat(filePath, "/", 2);
-  
+
   int d = 0; 
   int f = 0; 
 
-  char *temp = (char *) malloc(sizeof(char) * MAXPATHNAME);//strlen(filePath) + 1);
+ // char *temp = (char *) malloc(sizeof(char) * MAXPATHNAME);//strlen(filePath) + 1);
+  char temp[MAXPATHNAME];
+  memset(temp, '\0', MAXPATHNAME);
+  strncpy(temp, filePath, MAXPATHNAME);
+  int isRootDir = strncmp(filePath, "/", 2);
   if(state.showHidden == 0) {
     while ((de = readdir(dr)) != NULL) {
       if(de->d_name[0] != '.') {
-        strncpy(temp, filePath, strlen(filePath)+1);
-        if(isDirectory(strncat(temp, de->d_name, strlen(de->d_name)+1)) == 1) {
-          strncpy(dir->folders[d].name, de->d_name, MAXPATHNAME);
-          strncpy(dir->folders[d].path, filePath, MAXPATHNAME);
-          strncat(dir->folders[d].path, de->d_name, strlen(de->d_name)+3);
+        
+        strncpy(temp, filePath, MAXPATHNAME);
+        if(isRootDir != 0) strcat(temp, "/");
+        if(isDirectory(strcat(temp, de->d_name)) == 1) {
+          strncpy(dir->folders[d].name, de->d_name, MAXFILENAME);
+          
+          strncpy(dir->folders[d].path, temp, MAXPATHNAME);
           dir->folders[d].subdir = NULL;
           d++;
         } else {
           getFileStats(&dir->files[f], temp);
           strncpy(dir->files[f].name, de->d_name, strlen(de->d_name)+1);
+          strncpy(dir->files[f].path, temp, MAXPATHNAME);
           f++;
         }
       }
@@ -95,28 +94,80 @@ void readDir(char *pathIn, Directory *dir) {
     }
     closedir(dr);
   }
-  filePath = NULL; 
-  free(filePath);
-  /* sort folders & files*/
+
   sortFolders(dir->folders, dir->folderCount);
   sortFiles(dir->files, dir->fileCount);
-  /* set selected for parent directory*/
-  if(strcmp(pathIn, "..") == 0) {
-    for(int i = 0; i < dir->folderCount; i++) {
-      getcwd(temp, sizeof(char)*MAXPATHNAME);
-      if(strcmp(temp, dir->folders[i].path) == 0)
-        dir->selected = i;
-    }
-    //strcat(dir->path, "/");
-  } else {
-    dir->selected = 0;
-  }
-  temp = NULL;
-  free(temp);
   dir->doNotUse = 0;
+  dir->selected = 0;
 }
-/*utility definitions*/
 
+int getLastSlashIndex(char *path) {
+  int lastIndex = 0;
+   for(int i = 0; i < strlen(path); i++) {
+    if(path[i] == '/') lastIndex = i;
+  }
+  return lastIndex;
+}
+/*initializes directories backward toward root *
+*   root<--dir<----dir<----current            */
+Directory *initDirectories() {
+  Directory *current = malloc(sizeof(Directory));
+  char currentPath[MAXPATHNAME];
+  getcwd(currentPath, MAXPATHNAME);
+  int slashCount = 0;
+  int lastSlashIndex = getLastSlashIndex(currentPath);
+  for(int i = 0; i < strlen(currentPath); i++) {
+    if(currentPath[i] == '/') slashCount++;
+  }
+  /*start at current dir, progress back to root*/
+  readDir(currentPath, current);
+  char temp[MAXPATHNAME];
+  memset(temp, '\0', MAXPATHNAME);
+  strncpy(temp, currentPath, lastSlashIndex);
+  Directory *indexer = current;
+  /*go backward one directory at a time*/
+  for(int i = slashCount; i > 0; i--) {
+    if(slashCount > 1) {
+      Directory *parent = malloc(sizeof(Directory));
+      readDir(temp, parent);
+      for(int s = 0; s < parent->folderCount; s++) {
+        if(strcmp(indexer->path, parent->folders[s].path) == 0) {
+          parent->folders[s].subdir = indexer;
+          parent->selected = s;
+        } 
+      }
+      indexer->parent = parent;
+      indexer = parent;
+      
+      lastSlashIndex = getLastSlashIndex(indexer->path);
+      memset(temp, '\0', MAXPATHNAME);
+      strncpy(temp, indexer->path, lastSlashIndex);
+      slashCount--;
+    } else {
+      /*is root dir*/
+      Directory *root = malloc(sizeof(Directory));
+      memset(root->path, '\0', MAXPATHNAME);
+      strncpy(root->path, "/", 2);
+      readDir("/", root);
+      for(int s = 0; s < root->folderCount; s++) {
+        if(strcmp(indexer->path, root->folders[s].path) == 0) {
+          root->folders[s].subdir = indexer;
+          root->selected = s;
+        } 
+      }
+      indexer->parent = root;
+      root->parent = malloc(sizeof(Directory));
+      readDir(NULL, root->parent);
+    //  indexer = root;
+    }
+  }
+  printf("%s, %d\n", indexer->path, indexer->selected);
+  printf("%s, %d\n", indexer->parent->path, indexer->parent->selected);
+
+  return current;
+}
+
+/*utility definitions*/
 char *toLower(char *in) {
   char *s = malloc(sizeof(char) * MAXFILENAME);
   strcpy(s, in);
@@ -184,73 +235,12 @@ int isDirectory(const char *path)
     return S_ISDIR(pathstat.st_mode);
 }
 
-char *getHeaderDirPath(char *input) {
-  if(strcmp(input, "/") == 0) {
-  //  printf("Nothing above root.\n");
-    return input;
-  }
-  //get the index of the last '/'
-  int lastSlashIndex = -1;
-  for(int i = 0; i < strlen(input); i++)
-    if(input[i] == '/') lastSlashIndex = i;
-  char *ret = (char *) malloc(sizeof(char)*lastSlashIndex+1);
-  strncpy(ret, input, lastSlashIndex+1);
-  //for(int i = 0; i <= lastSlashIndex; i++)
-   // ret[i] = input[i];
-  /* safety measure incase abpve dir is root*/
-  ret[lastSlashIndex+1] = '\0';
-  free(input);
-  return ret;
-}
-
-char *adjustDirPath(char *input) {
-  char *temp = (char *) malloc(MAXPATHNAME);
-  getcwd(temp, MAXPATHNAME);
-  if(strcmp(".\0", input) == 0) {
-    if(strcmp(temp, "/\0") == 0 ) return "/";
-    return temp;
-  }
-  else if(strcmp("..\0", input) == 0) {
-    //printf("%s\n", temp);
-    if(strcmp(temp, "/\0") == 0 ) {
-      //printf("%s\n", input);
-      //printf("%s\n", temp);
-      return NULL;
-    } 
-    temp = getHeaderDirPath(temp);
-    //printf("%s\n", temp);
-    if(strcmp(temp, "/\0") == 0) return temp;
-    else temp[strlen(temp)-1] = '\0';
-    //temp[strlen(temp)] = ' ';
-    return temp;
-  }
-  free(temp);
-  return input;
-  /*
-  int slashCount = 0;
-  for(int i = 0; i < strlen(input); i++)
-    if(input[i] == '/') slashCount++;
-  if(slashCount != 0) {
-    free(temp);
-    //char* newTemp = malloc(MAXPATHNAME);
-    //strncpy(newTemp, input, strlen(input));
-    //return newTemp;
-    return input;
-  } else {
-    //strncpy(temp, "/", 2);
-    //strncat(temp, input, strlen(input));
-    //return temp;
-    return "LOLLL";
-  } */
-}
-
 void getDirectoryCounts(int *folderCount, int *fileCount, char *fp) {
-
   char *filePath = (char *)malloc(strlen(fp)*sizeof(char));
   strcpy(filePath, fp);
   struct dirent *de;
   DIR *dir = opendir(filePath);
-  strcat(filePath, "/");
+  if(strncmp(fp, "/", 2) != 0) strcat(filePath, "/");
   char *temp;
   if(state.showHidden == 0) {
     while ((de = readdir(dir)) != NULL) {

@@ -1,7 +1,7 @@
 #ifndef DATA_H
 #define DATA_H
 
-#define MAXFILENAME 255
+#define MAXFILENAME 256
 #define MAXPATHNAME 4096
 
 typedef struct File File;
@@ -17,6 +17,7 @@ typedef struct Directory Directory;
  * */
 struct File {
   char name[MAXFILENAME];
+  char path[MAXPATHNAME];
   char type;
   char *preview;
   unsigned int ownerUID;
@@ -42,6 +43,7 @@ struct Directory {
   int doNotUse;
 };
 
-void readDir(char *filePath, Directory *dir);//char **files);
+Directory *initDirectories();
+void readDir(char *filePath, Directory *dir);
 
 #endif

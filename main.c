@@ -1,6 +1,8 @@
 /*******************************
 *COMPUTER-FRIENDLY FILE MANAGER*
 *******************************/
+#define VERSION "0.1.1 alpha"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -16,24 +18,20 @@ State state;
 int main() {
   Display *window = malloc(sizeof(Display));
 
+  state.isRunning = 1;
   state.showHidden = 0;
+  state.showBorder = 1;
 
-  Directory *directory = malloc(sizeof(Directory));
-
-  readDir(".", directory); //directory);
-  directory->parent = malloc(sizeof(Directory)); //malloc(sizeof(Directory));
-  readDir("..", directory->parent);//directory->parent);
-  if(directory->parent->folders != NULL) directory->parent->folders[directory->parent->selected].subdir = directory;
-  
-  //if(directory->parent->folders != NULL) directory->parent->folders[directory->parent->selected].subdir = NULL; //*directory;
+  Directory *directory = initDirectories();
+  printf("Directory Path: %s\n", directory->path);
   
   initDisplay(window, directory);
-  for(;;) {
+  while(state.isRunning) {
     checkUpdates(window);
     display(window, &directory);
   }
 	killDisplay();
-  //printf("%s\n", directory->path);
+  /*
   directory->parent->files = NULL;
   free(directory->parent->files);
   directory->parent->folders = NULL;
@@ -45,6 +43,6 @@ int main() {
   directory->folders = NULL;
   free(directory->folders);
   free(directory);
-	
+	*/
   return 0;
 }
