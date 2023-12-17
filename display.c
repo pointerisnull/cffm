@@ -53,16 +53,18 @@ void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
             temp = dir->folders[dir->selected].subdir;
             *dirptr = temp;
           }
-          //if new dir, read next
+          /*if new dir, read next*/
           if(temp->selected < temp->folderCount && (temp->folders[temp->selected].subdir == NULL)) {
             Directory *subtemp = malloc(sizeof(Directory));
             readDir(temp->folders[temp->selected].path, subtemp);
             if(subtemp->doNotUse == 0) {
               subtemp->parent = temp;
               temp->folders[temp->selected].subdir = subtemp;
+            }else{
+              subtemp = NULL;
+              free(subtemp);
             }
           }
-          //
         } 
       }
       break;
@@ -108,9 +110,16 @@ void initDisplay(Display *dis, Directory *dir) {
   wattron(dis->rightWin, A_BOLD);
 
   if(dir->selected < dir->folderCount && dir->folders[dir->selected].subdir == NULL) {
-    dir->folders[dir->selected].subdir = malloc(sizeof(Directory));
-    dir->folders[dir->selected].subdir->parent = dir;
-    readDir(dir->folders[dir->selected].path, dir->folders[dir->selected].subdir);
+    Directory *subtemp = malloc(sizeof(Directory));
+    readDir(dir->folders[dir->selected].path, subtemp);
+    if(subtemp->doNotUse == 0) {
+      subtemp->parent = dir;
+      dir->folders[dir->selected].subdir = subtemp;
+    }else{
+      subtemp = NULL;
+      free(subtemp);
+    }
+
   }
  
 }

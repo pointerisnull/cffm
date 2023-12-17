@@ -42,21 +42,17 @@ void readDir(const char *filePath, Directory *dir) {
   dir->files = malloc(sizeof(File)*dir->fileCount+1);
   /*open directory*/
   struct dirent *de = NULL;
-  //crashes here sometimes, not sure why
   DIR *dr = opendir(filePath);
-  //printf("HERE2\n");
   if(dr == NULL) return;
   int d = 0; 
   int f = 0; 
   char readPath[MAXPATHNAME];
   memset(readPath, '\0', MAXPATHNAME);
   /*now read it*/
-  //printf("READING DIR: %s\n", filePath);
   int isRootDir = strncmp(filePath, "/", 2);
   if(state.showHidden == 0) {
     while ((de = readdir(dr)) != NULL) {
       if(de->d_name[0] != '.') {
-      //  printf("%s\n", de->d_name);
         strncpy(readPath, filePath, MAXPATHNAME);
         if(isRootDir != 0) strncat(readPath, "/", 2);
         strncat(readPath, de->d_name, strlen(de->d_name));
@@ -74,7 +70,6 @@ void readDir(const char *filePath, Directory *dir) {
       }
     }
     closedir(dr);
-    //printf("CLOSING\n");
   } else {
     while ((de = readdir(dr)) != NULL) {
       strcpy(readPath, filePath);
@@ -161,7 +156,6 @@ Directory *initDirectories() {
 
   return current;
 }
-
 /*utility definitions*/
 char *toLower(char *in) {
   char *s = malloc(sizeof(char) * MAXFILENAME);
@@ -231,8 +225,9 @@ int isDirectory(const char *path)
 }
 
 void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
-  char *filePath = (char *)malloc(strlen(fp)*sizeof(char));
-  strcpy(filePath, fp);
+  char filePath[MAXPATHNAME];
+  memset(filePath, '\0', MAXPATHNAME);
+  strncpy(filePath, fp, MAXPATHNAME);
   struct dirent *de = NULL;
   DIR *dir = NULL;
   dir = opendir(filePath);
@@ -241,11 +236,10 @@ void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
   char temp[MAXPATHNAME];
   if(state.showHidden == 0) {
     while ((de = readdir(dir)) != NULL) {
-      //printf("HERE: %s, %d, %d\n", de->d_name, de->d_type, de->d_reclen);
       if(de->d_name[0] != '.') {
         
         memset(temp, '\0', MAXPATHNAME);
-        strcpy(temp, filePath);
+        strncpy(temp, filePath, MAXPATHNAME);
         strcat(temp, de->d_name);
         if(isDirectory(temp)) {
           *folderCount+=1;
@@ -266,7 +260,5 @@ void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
       }
     }
   }
-  free(filePath);
-  dir = NULL;
   closedir(dir);
 }

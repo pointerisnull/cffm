@@ -1,7 +1,10 @@
-/*******************************
-*COMPUTER-FRIENDLY FILE MANAGER*
-*******************************/
-#define VERSION "0.1.1 alpha"
+/********************************
+* CONSOLE-FRIENDLY FILE MANAGER *
+*                               *
+*   v.0.1.2 (indev)             *
+*                               *
+*   -Bdon 2023                  *
+********************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +23,7 @@ int main() {
 
   state.isRunning = 1;
   state.showHidden = 0;
-  state.showBorder = 0;
+  state.showBorder = 1;
 
   Directory *directory = initDirectories();
   
