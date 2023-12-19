@@ -27,6 +27,7 @@ void readDir(const char *filePath, Directory *dir) {
     dir->files = malloc(sizeof(File));
     dir->folders = NULL;
     strncpy(dir->files[0].name, "[ROOTFS]", 9);
+    dir->files[0].type = 'z';
     return;
   }
   dir->parent = NULL;
@@ -248,7 +249,7 @@ void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
         }
       }
     }
-  }else {
+  } else {
     while ((de = readdir(dir)) != NULL) {
       memset(temp, '\0', MAXPATHNAME);
       strcpy(temp, filePath);

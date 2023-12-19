@@ -1,37 +1,36 @@
-/********************************
+/*******************************\
 * CONSOLE-FRIENDLY FILE MANAGER *
 *                               *
-*   v.0.1.2 (indev)             *
+*   v.0.2.0 (indev)             *
 *                               *
 *   -Bdon 2023                  *
-********************************/
+\*******************************/
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
-#include <unistd.h>
-#include <limits.h>
-#include <string.h>
 #include "data.h"
 #include "display.h"
 #include "config.h"
 
 State state;
 
-int main() {
+int main(int argc,  char *argv[]) {
   Display *window = malloc(sizeof(Display));
 
   state.isRunning = 1;
+  state.hasPerformedAction = 0;
   state.showHidden = 0;
   state.showBorder = 1;
 
   Directory *directory = initDirectories();
   
   initDisplay(window, directory);
+
   while(state.isRunning) {
     checkUpdates(window);
     display(window, &directory);
   }
+
 	killDisplay();
   
   /*
