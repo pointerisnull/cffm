@@ -12,13 +12,13 @@ Dependencies:
     -ncurses (Arch/Gentoo)
 
 Compiling:
-    `make`
+`make`
 
 Installing:
-    `make install`
+`make install`
 
 ## Uninstall CFFM
-    `sudo make uninstall`
+`sudo make uninstall`
 
 # Configuration File
-    Coming soon...
+Coming soon...
