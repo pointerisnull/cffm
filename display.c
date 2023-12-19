@@ -166,16 +166,17 @@ void checkUpdates(Display *dis) {
   /*resize window width/height if change in terminal size*/
   if(dis->width != w.ws_col || dis->height != w.ws_row) {
     dis->width = w.ws_col;
-    dis->height = w.ws_row + abs(1-state.showBorder);
+    if(state.showBorder) dis->height = w.ws_row -1;
+    else dis->height = w.ws_row - abs(1-state.showBorder);
     dis->mainWinWidth = w.ws_col/2 - (w.ws_col/8);
     dis->leftWinWidth = w.ws_col/8;
     dis->rightWinWidth = w.ws_col/2;
-    wresize(dis->leftWin, w.ws_row-state.showBorder, dis->leftWinWidth);
-    wresize(dis->mainWin, w.ws_row-state.showBorder, dis->mainWinWidth);
-    wresize(dis->rightWin, w.ws_row-state.showBorder, dis->rightWinWidth);
+    wresize(dis->leftWin, dis->height, dis->leftWinWidth);
+    wresize(dis->mainWin, dis->height, dis->mainWinWidth);
+    wresize(dis->rightWin, dis->height, dis->rightWinWidth);
 
     mvwin(dis->leftWin, 1, 0);
-    mvwin(dis->mainWin, 1, dis->leftWinWidth-1+state.showBorder);
+    mvwin(dis->mainWin, 1, dis->leftWinWidth);
     mvwin(dis->rightWin, 1, w.ws_col/2);
   }
 }
