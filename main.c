@@ -1,10 +1,9 @@
 /*******************************\
 * CONSOLE-FRIENDLY FILE MANAGER *
 *                               *
-*   v.0.2.0 (indev)             *
-*                               *
 *   -Bdon 2023                  *
 \*******************************/
+#define VERSION "v.0.2.2 (indev)"
 
 #include <stdlib.h>
 #include <ncurses.h>
@@ -19,7 +18,7 @@ int main(int argc,  char *argv[]) {
 
   state.isRunning = 1;
   state.hasPerformedAction = 0;
-  state.showHidden = 1;
+  state.showHidden = 0;
   state.showBorder = 1;
   state.shiftPos = 16;
 
