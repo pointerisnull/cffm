@@ -73,17 +73,21 @@ void readDir(const char *filePath, Directory *dir) {
     closedir(dr);
   } else {
     while ((de = readdir(dr)) != NULL) {
-      strcpy(readPath, filePath);
-      if(isDirectory(strcat(readPath, de->d_name)) == 1) {
-        strncpy(dir->folders[d].name, de->d_name, strlen(de->d_name));
-        strncpy(dir->folders[d].path, filePath, strlen(filePath));
-        strncat(dir->folders[d].path, de->d_name, strlen(de->d_name));
-        dir->folders[d].subdir = NULL;
-        d++;
-      } else {
-        getFileStats(&dir->files[f], readPath);
-        strncpy(dir->files[f].name, de->d_name, strlen(de->d_name)+1);
-        f++;
+      if(strncmp(de->d_name, ".", 2) != 0 && strncmp(de->d_name, "..", 3) != 0) {
+        strncpy(readPath, filePath, MAXPATHNAME);
+        if(isRootDir != 0) strncat(readPath, "/", 2);
+        strncat(readPath, de->d_name, strlen(de->d_name));
+        if(isDirectory(readPath) == 1) {
+          strncpy(dir->folders[d].name, de->d_name, MAXFILENAME);
+          strncpy(dir->folders[d].path, readPath, MAXPATHNAME);
+          dir->folders[d].subdir = NULL;
+          d++;
+        } else {
+          getFileStats(&dir->files[f], readPath);
+          strncpy(dir->files[f].name, de->d_name, strlen(de->d_name)+1);
+          strncpy(dir->files[f].path, readPath, MAXPATHNAME);
+          f++;
+        }
       }
     }
     closedir(dr);
@@ -251,13 +255,15 @@ void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
     }
   } else {
     while ((de = readdir(dir)) != NULL) {
-      memset(temp, '\0', MAXPATHNAME);
-      strcpy(temp, filePath);
-      strcat(temp, de->d_name);
-      if(isDirectory(temp)) {
-        *folderCount+=1;
-      } else {
-        *fileCount+=1;
+      if(strncmp(de->d_name, ".", 2) != 0 && strncmp(de->d_name, "..", 3) != 0) {  
+        memset(temp, '\0', MAXPATHNAME);
+        strcpy(temp, filePath);
+        strcat(temp, de->d_name);
+        if(isDirectory(temp)) {
+          *folderCount+=1;
+        } else {
+          *fileCount+=1;
+        }
       }
     }
   }

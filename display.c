@@ -201,28 +201,33 @@ void display(Display *dis, Directory **dirptr) {
   char leftBuff[256];
   char mainBuff[256];
   char rightBuff[256];
-
+  int mainShiftView = 0;
+  //if(dir->selected+1 > dis->height-1-2*state.showBorder)
+    /* total files > window height */
+  if((dir->folderCount+dir->fileCount > dis->height-1-2*state.showBorder) && (dir->selected+state.shiftPos > dis->height-1-2*state.showBorder-1)) 
+    mainShiftView = dir->selected+state.shiftPos - dis->height+1+2*state.showBorder;
+  printw("\tShift: %d\t", mainShiftView);
   if(dis->mainWinWidth-2 > 0) {
     /*main window folders*/
     wattron(mainWin, COLOR_PAIR(3));
-    for(int i = 0; i < dir->folderCount && i < dis->height-3; i++) {
-      if(strlen(dir->folders[i].name) > dis->mainWinWidth-2) strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2);
-      else strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2);
+    for(int i = 0; i < dir->folderCount /*&& i < dis->height-1-2*state.showBorder*/; i++) {
+      if(strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder) strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
+      else strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
       mainBuff[strlen(mainBuff)] = '\0';
-      mvwaddstr(mainWin, i+state.showBorder, state.showBorder, mainBuff);
+      mvwaddstr(mainWin, i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
       memset(mainBuff,0,255);
     } 
     wattroff(mainWin, COLOR_PAIR(3));
     /*main window files*/
     wattron(mainWin, COLOR_PAIR(2));
-    for(int i = 0; i < dir->fileCount && i+dir->folderCount < dis->height-3; i++) {
+    for(int i = 0; i < dir->fileCount /*&& i+dir->folderCount < dis->height-state.showBorder*/; i++) {
       if(dir->files[i].type == 'e') wattron(mainWin, COLOR_PAIR(1));
       else wattron(mainWin, COLOR_PAIR(2));
  
       if(strlen(dir->files[i].name) > dis->mainWinWidth-2) strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
       else strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
       mainBuff[strlen(mainBuff)] = '\0';
-      mvwaddstr(mainWin, dir->folderCount+i+state.showBorder, state.showBorder, mainBuff);
+      mvwaddstr(mainWin, dir->folderCount+i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
       memset(mainBuff,0,255);
       /*display file info*/
       if(i == dir->selected - dir->folderCount) {
@@ -232,7 +237,7 @@ void display(Display *dis, Directory **dirptr) {
     }
     wattroff(mainWin, COLOR_PAIR(2));
     wattroff(mainWin, COLOR_PAIR(3));
-    mvwchgat(mainWin, dir->selected+state.showBorder, state.showBorder, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
+    mvwchgat(mainWin, dir->selected+state.showBorder-mainShiftView, state.showBorder, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
   }
   /*left window folders*/
   if(dis->leftWinWidth-2 > 0) {

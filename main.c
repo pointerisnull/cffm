@@ -19,8 +19,9 @@ int main(int argc,  char *argv[]) {
 
   state.isRunning = 1;
   state.hasPerformedAction = 0;
-  state.showHidden = 0;
+  state.showHidden = 1;
   state.showBorder = 1;
+  state.shiftPos = 16;
 
   Directory *directory = initDirectories();
   

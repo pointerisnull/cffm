@@ -9,6 +9,7 @@ typedef struct State {
   short hasPerformedAction;
   short showHidden;
   short showBorder;
+  short shiftPos;
 } State;
 
 extern State state;
