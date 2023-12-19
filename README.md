@@ -18,7 +18,7 @@ Installing:
 `make install`
 
 ## Uninstall CFFM
-`sudo make uninstall`
+`make uninstall`
 
 # Configuration File
 Coming soon...
