@@ -9,3 +9,6 @@ all:
 
 install:
 	sudo cp $(BIN) /usr/bin/
+
+uninstall:
+	sudo rm /usr/bin/$(BIN)
