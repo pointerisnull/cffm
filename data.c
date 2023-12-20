@@ -101,20 +101,20 @@ void readDir(const char *filePath, Directory *dir) {
 
 int getLastSlashIndex(char *path) {
   int lastIndex = 0;
-   for(int i = 0; i < strlen(path); i++) {
+   for(int i = 0; i < (int)strlen(path); i++) {
     if(path[i] == '/') lastIndex = i;
   }
   return lastIndex;
 }
 /*initializes directories backward toward root *
 *   root<--dir<----dir<----current            */
-Directory *initDirectories() {
+Directory *initDirectories(char *currentPath) {
   Directory *current = malloc(sizeof(Directory));
-  char currentPath[MAXPATHNAME];
-  getcwd(currentPath, MAXPATHNAME);
+  //char currentPath[MAXPATHNAME];
+  //getcwd(currentPath, MAXPATHNAME);
   int slashCount = 0;
   int lastSlashIndex = getLastSlashIndex(currentPath);
-  for(int i = 0; i < strlen(currentPath); i++) {
+  for(int i = 0; i < (int)strlen(currentPath); i++) {
     if(currentPath[i] == '/') slashCount++;
   }
   /*start at current dir, progress back to root*/
@@ -169,7 +169,7 @@ char *toLower(char *in) {
     *p=tolower(*p);
   return s;
 }
-
+/*REPLACE WITH QUICKSORT ALGO EVENTUALLY*/
 void sortFolders(Folder *folders, int count) {
   for(int i = 0; i < count-1; i++) {
     int min = i;
@@ -190,7 +190,7 @@ void sortFolders(Folder *folders, int count) {
     }
   }
 }
-
+/*REPLACE WITH QUICKSORT ALGO EVENTUALLY*/
 void sortFiles(File *files, int count) {
   for(int i = 0; i < count-1; i++) {
     int min = i;
@@ -246,11 +246,10 @@ void getDirectoryCounts(int *folderCount, int *fileCount, const char *fp) {
         memset(temp, '\0', MAXPATHNAME);
         strncpy(temp, filePath, MAXPATHNAME);
         strcat(temp, de->d_name);
-        if(isDirectory(temp)) {
+        if(isDirectory(temp))
           *folderCount+=1;
-        } else {
+        else
           *fileCount+=1;
-        }
       }
     }
   } else {

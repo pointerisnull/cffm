@@ -45,7 +45,7 @@ struct Directory {
   int doNotUse;
 };
 
-Directory *initDirectories();
+Directory *initDirectories(char *path);
 void readDir(const char *filePath, Directory *dir);
 
 #endif

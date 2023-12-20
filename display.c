@@ -5,11 +5,12 @@
 #include <unistd.h>
 #include <string.h>
 #include "display.h"
+#include "data.h"
 #include "config.h"
 
 char *getFilePreview(char *filePath);
 
-void handleInput(int key, Display *dis, Directory *dir, Directory **dirptr) {
+void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) {
   switch(key) {
     case 'h':
       if(strncmp(dir->path, "/", 2) != 0) {
@@ -117,7 +118,8 @@ char *getFilePreview(char *filePath) {
   return buffer;
 }
 
-void initDisplay(Display *dis, Directory *dir) {	
+Display *initDisplay(Directory *dir) {	
+  Display *dis = malloc(sizeof(Display));
   initscr();
   cbreak();
   curs_set(0);
@@ -128,6 +130,7 @@ void initDisplay(Display *dis, Directory *dir) {
   init_pair(2, COLOR_WHITE, -1);
   init_pair(3, COLOR_MAGENTA, -1);
   init_pair(4, COLOR_RED, -1);
+  init_pair(5, COLOR_RED, -1);
 
   dis->mainWinWidth = COLS/2 - (COLS/8);
   dis->leftWinWidth = COLS/8;
@@ -158,6 +161,7 @@ void initDisplay(Display *dis, Directory *dir) {
       free(subtemp);
     }
   }
+  return dis;
 }
 
 void checkUpdates(Display *dis) {
@@ -212,7 +216,7 @@ void display(Display *dis, Directory **dirptr) {
     /*main window folders*/
     wattron(mainWin, COLOR_PAIR(3));
     for(int i = 0; i < dir->folderCount /*&& i < dis->height-1-2*state.showBorder*/; i++) {
-      if(strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder) strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
+      if((int)strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder) strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
       else strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
       mainBuff[strlen(mainBuff)] = '\0';
       mvwaddstr(mainWin, i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
@@ -225,7 +229,7 @@ void display(Display *dis, Directory **dirptr) {
       if(dir->files[i].type == 'e') wattron(mainWin, COLOR_PAIR(1));
       else wattron(mainWin, COLOR_PAIR(2));
  
-      if(strlen(dir->files[i].name) > dis->mainWinWidth-2) strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
+      if((int)strlen(dir->files[i].name) > dis->mainWinWidth-2) strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
       else strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
       mainBuff[strlen(mainBuff)] = '\0';
       mvwaddstr(mainWin, dir->folderCount+i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
@@ -244,7 +248,7 @@ void display(Display *dis, Directory **dirptr) {
   if(dis->leftWinWidth-2 > 0) {
     wattron(leftWin, COLOR_PAIR(3));
     for(int i = 0; i < top->folderCount && i < dis->height-3; i++) {
-      if(strlen(top->folders[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2); 
+      if((int)strlen(top->folders[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2); 
       else strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2);
       leftBuff[strlen(leftBuff)] = '\0';
       mvwaddstr(leftWin, i+state.showBorder, state.showBorder, leftBuff);
@@ -257,7 +261,7 @@ void display(Display *dis, Directory **dirptr) {
       if(top->files[i].type == 'e') wattron(leftWin, COLOR_PAIR(1));
       else wattron(leftWin, COLOR_PAIR(2));
  
-      if(strlen(top->files[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->files[i].name, dis->leftWinWidth-2); 
+      if((int)strlen(top->files[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->files[i].name, dis->leftWinWidth-2); 
       else strncpy(leftBuff, top->files[i].name, dis->leftWinWidth-2);
       leftBuff[strlen(leftBuff)] = '\0';
       mvwaddstr(leftWin, top->folderCount+i+state.showBorder, state.showBorder, leftBuff);
@@ -336,7 +340,7 @@ void display(Display *dis, Directory **dirptr) {
   wrefresh(mainWin);
   /*wait for user input*/
   int key = wgetch(mainWin);
-  if(key != ERR) handleInput(key, dis, dir, dirptr);
+  if(key != ERR) handleInput(key, /*dis,*/ dir, dirptr);
 
   attroff(COLOR_PAIR(1));
   attroff(A_BOLD);
@@ -344,6 +348,7 @@ void display(Display *dis, Directory **dirptr) {
   erase();
 }
 
-void killDisplay() {
+void killDisplay(Display *dis) {
+  free(dis);
 	endwin();
 }
