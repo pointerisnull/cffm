@@ -23,7 +23,7 @@ struct File {
   char type;
   char *preview;
   unsigned int ownerUID;
-  long long byteSize;
+  long long bytesize;
   long long date;
 };
 
@@ -42,10 +42,10 @@ struct Directory {
   int folderCount;
   int fileCount;
   int selected;
-  int doNotUse;
+  int broken;
 };
 
-Directory *initDirectories(char *path);
-void readDir(const char *filePath, Directory *dir);
+Directory *init_directories(char *path);
+void read_directory(const char *filePath, Directory *dir);
 
 #endif

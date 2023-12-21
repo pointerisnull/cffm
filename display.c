@@ -8,15 +8,16 @@
 #include "data.h"
 #include "config.h"
 
-char *getFilePreview(char *filePath);
+char *get_file_preview(char *filePath);
 
-void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) {
+void handle_input(int key, Directory *dir, Directory **dirptr) {
   switch(key) {
     case 'h':
       if(strncmp(dir->path, "/", 2) != 0) {
         if(chdir("..") == 0) {
           Directory *temp = dir;
-          if(dir->parent->selected < dir->parent->folderCount && dir->parent->folders[dir->parent->selected].subdir == NULL) {
+          if(dir->parent->selected < dir->parent->folderCount 
+          && dir->parent->folders[dir->parent->selected].subdir == NULL) {
             dir->parent->folders[dir->parent->selected].subdir = temp;
           }
           temp = dir->parent;
@@ -25,11 +26,11 @@ void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) 
       }
       break;
     case 'j':
-      if(dir->selected < dir->folderCount+dir->fileCount-1/* && dir->selected < dis->height-4*/) dir->selected++;
+      if(dir->selected < dir->folderCount+dir->fileCount-1) dir->selected++;
       if(dir->selected < dir->folderCount && dir->folders[dir->selected].subdir == NULL) {
         Directory *temp = malloc(sizeof(Directory));
-        readDir(dir->folders[dir->selected].path, temp);
-        if(temp->doNotUse == 0) {
+        read_directory(dir->folders[dir->selected].path, temp);
+        if(temp->broken == 0) {
           temp->parent = dir;
           dir->folders[dir->selected].subdir = temp;
         }
@@ -39,8 +40,8 @@ void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) 
       if(dir->selected > 0) dir->selected--;
       if(dir->selected < dir->folderCount && (dir->folders[dir->selected].subdir == NULL)) {
         Directory *temp = malloc(sizeof(Directory));
-        readDir(dir->folders[dir->selected].path, temp);
-        if(temp->doNotUse == 0) {
+        read_directory(dir->folders[dir->selected].path, temp);
+        if(temp->broken == 0) {
           temp->parent = dir;
           dir->folders[dir->selected].subdir = temp;
         }
@@ -56,10 +57,11 @@ void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) 
             *dirptr = temp;
           }
           /*if new dir, read next*/
-          if(temp->selected < temp->folderCount && (temp->folders[temp->selected].subdir == NULL)) {
+          if(temp->selected < temp->folderCount 
+          && (temp->folders[temp->selected].subdir == NULL)) {
             Directory *subtemp = malloc(sizeof(Directory));
-            readDir(temp->folders[temp->selected].path, subtemp);
-            if(subtemp->doNotUse == 0) {
+            read_directory(temp->folders[temp->selected].path, subtemp);
+            if(subtemp->broken == 0) {
               subtemp->parent = temp;
               temp->folders[temp->selected].subdir = subtemp;
             } else {
@@ -68,7 +70,7 @@ void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) 
             }
           /*if only file, get preview*/
           } else if(temp->selected < temp->fileCount && temp->files[temp->selected].preview == NULL) {
-            temp->files[temp->selected].preview = getFilePreview(temp->files[temp->selected].path);
+            temp->files[temp->selected].preview = get_file_preview(temp->files[temp->selected].path);
           }
         } 
       }
@@ -87,7 +89,7 @@ void handleInput(int key, /*Display *dis,*/ Directory *dir, Directory **dirptr) 
   }
 }
 
-char *getFilePreview(char *filePath) {
+char *get_file_preview(char *filePath) {
   FILE *fp = fopen(filePath, "r");
   if(fp == NULL) return NULL;
 
@@ -105,8 +107,6 @@ char *getFilePreview(char *filePath) {
   }
   /*is the file a text file? If not, return NULL*/
   if(memchr(buffer, '\0', length-1) != NULL) {
-    /* do shit */
-    //memset(buffer,'\0',length);
     free(buffer);
     fclose(fp);
     return NULL;
@@ -118,7 +118,7 @@ char *getFilePreview(char *filePath) {
   return buffer;
 }
 
-Display *initDisplay(Directory *dir) {	
+Display *init_display(Directory *dir) {	
   Display *dis = malloc(sizeof(Display));
   initscr();
   cbreak();
@@ -152,8 +152,8 @@ Display *initDisplay(Directory *dir) {
 
   if(dir->selected < dir->folderCount && dir->folders[dir->selected].subdir == NULL) {
     Directory *subtemp = malloc(sizeof(Directory));
-    readDir(dir->folders[dir->selected].path, subtemp);
-    if(subtemp->doNotUse == 0) {
+    read_directory(dir->folders[dir->selected].path, subtemp);
+    if(subtemp->broken == 0) {
       subtemp->parent = dir;
       dir->folders[dir->selected].subdir = subtemp;
     } else {
@@ -164,7 +164,7 @@ Display *initDisplay(Directory *dir) {
   return dis;
 }
 
-void checkUpdates(Display *dis) {
+void get_updates(Display *dis) {
   struct winsize w;
   ioctl(0, TIOCGWINSZ, &w);
   /*resize window width/height if change in terminal size*/
@@ -185,7 +185,7 @@ void checkUpdates(Display *dis) {
   }
 }
 
-void display(Display *dis, Directory **dirptr) {
+void update_display(Display *dis, Directory **dirptr) {
   Directory *dir = *dirptr;
   WINDOW *leftWin = dis->leftWin;
   WINDOW *mainWin = dis->mainWin;
@@ -199,25 +199,29 @@ void display(Display *dis, Directory **dirptr) {
   attron(A_BOLD);
   attron(COLOR_PAIR(1));
   /*print currently selected directory path*/
-  if(dir->selected < dir->folderCount) printw("%s", dir->folders[dir->selected].path);
-  else if(dir->selected < (dir->folderCount + dir->fileCount)) printw("%s", dir->files[dir->selected - dir->folderCount].path);
+  if(dir->selected < dir->folderCount)
+    printw("%s", dir->folders[dir->selected].path);
+  else if(dir->selected < (dir->folderCount + dir->fileCount))
+    printw("%s", dir->files[dir->selected - dir->folderCount].path);
 
   /* display directories */
   char leftBuff[256];
   char mainBuff[256];
   char rightBuff[256];
   int mainShiftView = 0;
-  //if(dir->selected+1 > dis->height-1-2*state.showBorder)
     /* total files > window height */
-  if((dir->folderCount+dir->fileCount > dis->height-1-2*state.showBorder) && (dir->selected+state.shiftPos > dis->height-1-2*state.showBorder-1)) 
+  if((dir->folderCount+dir->fileCount > dis->height-1-2*state.showBorder) 
+  && (dir->selected+state.shiftPos > dis->height-1-2*state.showBorder-1)) 
     mainShiftView = dir->selected+state.shiftPos - dis->height+1+2*state.showBorder;
   printw("\tShift: %d\t", mainShiftView);
   if(dis->mainWinWidth-2 > 0) {
     /*main window folders*/
     wattron(mainWin, COLOR_PAIR(3));
-    for(int i = 0; i < dir->folderCount /*&& i < dis->height-1-2*state.showBorder*/; i++) {
-      if((int)strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder) strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
-      else strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
+    for(int i = 0; i < dir->folderCount; i++) {
+      if((int)strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder)
+        strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
+      else
+        strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
       mainBuff[strlen(mainBuff)] = '\0';
       mvwaddstr(mainWin, i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
       memset(mainBuff,0,255);
@@ -225,31 +229,37 @@ void display(Display *dis, Directory **dirptr) {
     wattroff(mainWin, COLOR_PAIR(3));
     /*main window files*/
     wattron(mainWin, COLOR_PAIR(2));
-    for(int i = 0; i < dir->fileCount /*&& i+dir->folderCount < dis->height-state.showBorder*/; i++) {
-      if(dir->files[i].type == 'e') wattron(mainWin, COLOR_PAIR(1));
-      else wattron(mainWin, COLOR_PAIR(2));
+    for(int i = 0; i < dir->fileCount; i++) {
+      if(dir->files[i].type == 'e')
+        wattron(mainWin, COLOR_PAIR(1));
+      else
+        wattron(mainWin, COLOR_PAIR(2));
  
-      if((int)strlen(dir->files[i].name) > dis->mainWinWidth-2) strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
-      else strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
+      if((int)strlen(dir->files[i].name) > dis->mainWinWidth-2)
+        strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
+      else
+        strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
       mainBuff[strlen(mainBuff)] = '\0';
-      mvwaddstr(mainWin, dir->folderCount+i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
+      mvwaddstr(mainWin, dir->folderCount+i+state.showBorder-mainShiftView, 
+          state.showBorder, mainBuff);
       memset(mainBuff,0,255);
       /*display file info*/
-      if(i == dir->selected - dir->folderCount) {
-        printw("\t%lld Bytes", dir->files[dir->selected - dir->folderCount].byteSize);
-      }
-
+      if(i == dir->selected - dir->folderCount)
+        printw("\t%lld Bytes", dir->files[dir->selected - dir->folderCount].bytesize);
     }
     wattroff(mainWin, COLOR_PAIR(2));
     wattroff(mainWin, COLOR_PAIR(3));
-    mvwchgat(mainWin, dir->selected+state.showBorder-mainShiftView, state.showBorder, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
+    mvwchgat(mainWin, dir->selected+state.showBorder-mainShiftView, 
+        state.showBorder, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
   }
   /*left window folders*/
   if(dis->leftWinWidth-2 > 0) {
     wattron(leftWin, COLOR_PAIR(3));
     for(int i = 0; i < top->folderCount && i < dis->height-3; i++) {
-      if((int)strlen(top->folders[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2); 
-      else strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2);
+      if((int)strlen(top->folders[i].name) > dis->leftWinWidth-2) 
+        strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2); 
+      else 
+        strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2);
       leftBuff[strlen(leftBuff)] = '\0';
       mvwaddstr(leftWin, i+state.showBorder, state.showBorder, leftBuff);
       memset(leftBuff,0,255);
@@ -282,8 +292,10 @@ void display(Display *dis, Directory **dirptr) {
       wattron(rightWin, COLOR_PAIR(3));
       for(int i = 0; i < folderCount && i < dis->height-3; i++) {
         int nameLength = strlen(dir->folders[dir->selected].subdir->folders[i].name);
-        if(nameLength > dis->rightWinWidth-2) strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2); 
-        else strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2);
+        if(nameLength > dis->rightWinWidth-2) 
+          strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2); 
+        else 
+          strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2);
         rightBuff[nameLength] = '\0';
  
         mvwprintw(rightWin, i+state.showBorder, state.showBorder, "%s", rightBuff);
@@ -294,30 +306,37 @@ void display(Display *dis, Directory **dirptr) {
       /*display subdir files*/
       wattron(rightWin, COLOR_PAIR(2));
       for(int i = 0; i < fileCount && i+folderCount < dis->height-3; i++) {
-        if(dir->folders[dir->selected].subdir->files[i].type == 'e') wattron(rightWin, COLOR_PAIR(1));
-        else wattron(rightWin, COLOR_PAIR(2));
+        if(dir->folders[dir->selected].subdir->files[i].type == 'e') 
+          wattron(rightWin, COLOR_PAIR(1));
+        else 
+          wattron(rightWin, COLOR_PAIR(2));
  
         int nameLength = strlen(dir->folders[dir->selected].subdir->files[i].name);
-        if(nameLength > dis->rightWinWidth-2) strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2); 
-        else strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2);
+        if(nameLength > dis->rightWinWidth-2) 
+          strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2); 
+        else 
+          strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2);
         rightBuff[nameLength] = '\0';
 
         mvwprintw(rightWin, folderCount+i+state.showBorder, state.showBorder, "%s",  rightBuff);
         memset(rightBuff,0,255);
       }
       wattroff(leftWin, COLOR_PAIR(2)); 
-      mvwchgat(rightWin, dir->folders[dir->selected].subdir->selected+state.showBorder, state.showBorder, dis->rightWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, 3, NULL);
+      mvwchgat(rightWin, 
+          dir->folders[dir->selected].subdir->selected+state.showBorder, 
+          state.showBorder, dis->rightWinWidth-1-state.showBorder, 
+          A_STANDOUT | A_BOLD, 3, NULL);
     /*display currently selected file preview*/
     } else if(dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount) {
       if(dir->files[dir->selected - dir->folderCount].preview == NULL) 
-        dir->files[dir->selected - dir->folderCount].preview = getFilePreview(dir->files[dir->selected - dir->folderCount].path);
+        dir->files[dir->selected - dir->folderCount].preview = get_file_preview(dir->files[dir->selected - dir->folderCount].path);
       if(dir->files[dir->selected - dir->folderCount].preview != NULL) 
         mvwprintw(rightWin, state.showBorder, state.showBorder, "%s", dir->files[dir->selected - dir->folderCount].preview);
       else
         mvwprintw(rightWin, state.showBorder, state.showBorder, "%s\nOwner: %d\nSize: %lld Bytes\nDate: %lld\n", 
             dir->files[dir->selected - dir->folderCount].name,
             dir->files[dir->selected - dir->folderCount].ownerUID,
-            dir->files[dir->selected - dir->folderCount].byteSize,
+            dir->files[dir->selected - dir->folderCount].bytesize,
             dir->files[dir->selected - dir->folderCount].date);
     }
   }
@@ -340,7 +359,8 @@ void display(Display *dis, Directory **dirptr) {
   wrefresh(mainWin);
   /*wait for user input*/
   int key = wgetch(mainWin);
-  if(key != ERR) handleInput(key, /*dis,*/ dir, dirptr);
+  if(key != ERR)
+    handle_input(key, dir, dirptr);
 
   attroff(COLOR_PAIR(1));
   attroff(A_BOLD);
@@ -348,7 +368,7 @@ void display(Display *dis, Directory **dirptr) {
   erase();
 }
 
-void killDisplay(Display *dis) {
+void kill_display(Display *dis) {
   free(dis);
 	endwin();
 }

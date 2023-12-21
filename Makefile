@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = --static -lncurses -ltinfo -Wall -Werror -Wextra
+CFLAGS = --static --std=c99 -lncurses -ltinfo -Wall -Werror -Wextra
 
 SRC = main.c data.c display.c
 BIN = cffm

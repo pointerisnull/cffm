@@ -16,9 +16,9 @@ typedef struct Display {
 
 } Display;
 
-void checkUpdates(Display *dis);
-Display *initDisplay(Directory *dir);
-void display(Display *dis, Directory **dir);
-void killDisplay(Display *dis);
+void get_updates(Display *dis);
+Display *init_display(Directory *dir);
+void update_display(Display *dis, Directory **dir);
+void kill_display(Display *dis);
 
 #endif

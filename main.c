@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.2.3 (indev)"
+#define VERSION "v.0.2.4 (indev)"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +16,7 @@
 
 State state;
 //WIP
-int generateDefaultConfig() {
+int gen_default_config() {
  /* char *buffer[] = {
     "\[Settings\]",
     "SHIFTSIZE=16"
@@ -28,7 +28,7 @@ void init() {
   state.isRunning = 1;
   state.hasPerformedAction = 0;
   state.showHidden = 0;
-  state.showBorder = 1;
+  state.showBorder = 0;
   state.shiftPos = 16;
 
 }
@@ -40,7 +40,7 @@ int main(int argc,  char *argv[]) {
       printf("CFFM %s\n", VERSION);
     else if(strncmp(argv[1], "--gen-config", 13) == 0) {
       printf("Generating a new config file...\n");
-      if(generateDefaultConfig() == 0) printf("Created a fresh config: ~/.config/cffm.conf\n");
+      if(gen_default_config() == 0) printf("Created a fresh config: ~/.config/cffm.conf\n");
       else printf("Error generating config! Exiting!\n");
     }
     else
@@ -50,16 +50,16 @@ int main(int argc,  char *argv[]) {
   
   if(current_path[0] == '\0') getcwd(current_path, MAXPATHNAME);
   init();
-  Directory *directory = initDirectories(current_path);
+  Directory *directory = init_directories(current_path);
   
-  Display *window = initDisplay(directory);
+  Display *window = init_display(directory);
 
   while(state.isRunning) {
-    checkUpdates(window);
-    display(window, &directory);
+    get_updates(window);
+    update_display(window, &directory);
   }
 
-	killDisplay(window);
+	kill_display(window);
   /*TODO: FREE DIRECTORY TREE PROPERLY*/
   return 0;
 }
