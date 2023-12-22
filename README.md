@@ -4,16 +4,16 @@
 CFFM is a minimalist terminal-based file manager. Heavily inspired by similar terminal based file managers such as `ranger` and `lf`, CFFM seeks to provide a clean, snappy, and customizable file managing experience.
 
 ## Download
-    You can download a static "just works" binary from the releases section when CFFM 1.0 releases.
+You can download a static "just works" binary from the releases section when CFFM 1.0 releases.
 
 ## Build and Install
 Dependencies:
-    -libncurses-dev (Debian)
-    -ncurses (Arch/Gentoo)
+-libncurses-dev (Debian)
+-ncurses (Arch/Gentoo)
 
 Compiling:
-    `make` for a slim, dynamically linked binary.
-    `make release` for a static binary.
+`make` for a slim, dynamically linked binary.
+`make release` for a static binary.
 
 Installing:
     `make install`
@@ -21,8 +21,9 @@ Installing:
 ## Uninstall CFFM
     `sudo make uninstall`
 
-# Configuration File
-    `/home/USER/.config/cffm.conf`
+# Configuration 
+## Using a Config File (Default)
+`/home/USER/.config/cffm.conf`
 If any option is deleted, not present, or invalid, CFFM will automatically use a hard-coded default.
 
 ## Configure Without an External Config File
