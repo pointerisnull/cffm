@@ -43,13 +43,12 @@ void read_directory(const char *filePath, Directory *dir) {
   dir->folders = malloc(sizeof(Folder)*dir->folderCount+1);
   dir->files = malloc(sizeof(File)*dir->fileCount+1);
 
-  if(open_and_read(filePath, dir) == 0) {
+  if(open_and_read(filePath, dir) != 0) return;
     /*finishing touches*/
-    sort_folders(dir->folders, dir->folderCount);
-    sort_files(dir->files, dir->fileCount);
-    dir->broken = 0;
-    dir->selected = 0;
-  }
+  sort_folders(dir->folders, dir->folderCount);
+  sort_files(dir->files, dir->fileCount);
+  dir->broken = 0;
+  dir->selected = 0;
 }
 /*populates the dir struct*/
 int open_and_read(const char *filePath, Directory *dir) {
