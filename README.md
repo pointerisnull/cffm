@@ -16,10 +16,10 @@ Compiling:
 `make release` for a static binary.
 
 Installing:
-    `make install`
+`make install`
 
 ## Uninstall CFFM
-    `sudo make uninstall`
+`make uninstall`
 
 # Configuration 
 ## Using a Config File (Default)
