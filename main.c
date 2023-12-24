@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.3.0 (indev)"
+#define VERSION "v.0.3.1 (indev)"
 
 #include <stdlib.h>
 #include <stdio.h>

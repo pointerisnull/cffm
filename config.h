@@ -10,6 +10,10 @@
 #define YELLOW  6
 #define WHITE   7
 #define BLACK   8
+/*window modes*/
+#define DIR_MODE      0
+#define PREVIEW_MODE  1
+#define CMD_MODE      2
 
 /*********************************\
 * set your desired values below.  *

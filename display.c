@@ -8,6 +8,8 @@
 #include "data.h"
 #include "config.h"
 
+/*utility functions*/
+void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode);
 char *get_file_preview(char *filePath);
 void read_selected(Directory *dir);
 
@@ -196,6 +198,82 @@ void get_updates(Display *dis) {
   }
 }
 
+void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
+  switch (mode) {
+    case 0:
+      char buffer[256];
+      int shiftview = 0;
+      /* total files > window height */
+      if ((dir->folderCount+dir->fileCount > height-1-2*state.showBorder) 
+      && (dir->selected+state.shiftPos > height-1-2*state.showBorder-1)) 
+        shiftview = dir->selected+state.shiftPos - height+1+2*state.showBorder;
+        /*printw("\tShift: %d\t", shiftview);*/
+      if (width > 0) {
+        /*main window folders*/
+        wattron(win, COLOR_PAIR(DIRCOLOR));
+        int i;
+        for (i = 0; i < dir->folderCount; i++) {
+          if ((int)strlen(dir->folders[i].name) >width-2*state.showBorder)
+            strncpy(buffer, dir->folders[i].name,width-2*state.showBorder);
+          else
+            strncpy(buffer, dir->folders[i].name,width-2*state.showBorder);
+          buffer[strlen(buffer)] = '\0';
+          mvwaddstr(win, i+state.showBorder-shiftview, state.showBorder, buffer);
+          memset(buffer,0,255);
+        } 
+        wattroff(win, COLOR_PAIR(DIRCOLOR));
+        /*main window files*/
+        wattron(win, COLOR_PAIR(FILECOLOR));
+        for (i = 0; i < dir->fileCount; i++) {
+          if (dir->files[i].type == 'e')
+            wattron(win, COLOR_PAIR(EXECOLOR));
+          else
+            wattron(win, COLOR_PAIR(FILECOLOR));
+ 
+          if ((int)strlen(dir->files[i].name) >width-2)
+            strncpy(buffer, dir->files[i].name,width-2);
+          else
+            strncpy(buffer, dir->files[i].name,width-2);
+          buffer[strlen(buffer)] = '\0';
+          mvwaddstr(win, dir->folderCount+i+state.showBorder-shiftview, 
+              state.showBorder, buffer);
+          memset(buffer,0,255);
+        }
+        wattroff(win, COLOR_PAIR(FILECOLOR));
+        wattroff(win, COLOR_PAIR(EXECOLOR));
+        mvwchgat(win, dir->selected+state.showBorder-shiftview, 
+        state.showBorder, width-1-state.showBorder, A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
+      } 
+      if (state.showBorder) {
+        wattron(win, COLOR_PAIR(BORDERCOLOR));
+        box(win, 0, 0);
+        wattroff(win, COLOR_PAIR(BORDERCOLOR));
+      }
+  
+      break;
+    case 1:
+      /* PREVIEW MODE */
+      /*display currently selected file preview*/
+      if (dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount) {
+        wattron(win, COLOR_PAIR(TEXTCOLOR));
+        if (dir->files[dir->selected - dir->folderCount].preview == NULL) 
+          dir->files[dir->selected - dir->folderCount].preview = get_file_preview(dir->files[dir->selected - dir->folderCount].path);
+        if (dir->files[dir->selected - dir->folderCount].preview != NULL) 
+          mvwprintw(win, state.showBorder, state.showBorder, "%s", dir->files[dir->selected - dir->folderCount].preview);
+        else
+          mvwprintw(win, state.showBorder, state.showBorder, "%s\nOwner: %s\nSize: %lld Bytes\nDate: %s\n", 
+              dir->files[dir->selected - dir->folderCount].name,
+              dir->files[dir->selected - dir->folderCount].owner,
+              dir->files[dir->selected - dir->folderCount].bytesize,
+              dir->files[dir->selected - dir->folderCount].date);
+        wattroff(win, COLOR_PAIR(TEXTCOLOR));
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 void update_display(Display *dis, Directory **dirptr) {
   Directory *dir = *dirptr;
   WINDOW *leftWin = dis->leftWin;
@@ -214,159 +292,13 @@ void update_display(Display *dis, Directory **dirptr) {
     printw("%s", dir->folders[dir->selected].path);
   else if (dir->selected < (dir->folderCount + dir->fileCount))
     printw("%s", dir->files[dir->selected - dir->folderCount].path);
-
-  /* display directories */
-  char leftBuff[256];
-  char mainBuff[256];
-  char rightBuff[256];
-  int mainShiftView = 0;
-    /* total files > window height */
-  if ((dir->folderCount+dir->fileCount > dis->height-1-2*state.showBorder) 
-  && (dir->selected+state.shiftPos > dis->height-1-2*state.showBorder-1)) 
-    mainShiftView = dir->selected+state.shiftPos - dis->height+1+2*state.showBorder;
-  /*printw("\tShift: %d\t", mainShiftView);*/
-  if (dis->mainWinWidth-2 > 0) {
-    /*main window folders*/
-    wattron(mainWin, COLOR_PAIR(DIRCOLOR));
-    int i;
-    for (i = 0; i < dir->folderCount; i++) {
-      if ((int)strlen(dir->folders[i].name) > dis->mainWinWidth-2*state.showBorder)
-        strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
-      else
-        strncpy(mainBuff, dir->folders[i].name, dis->mainWinWidth-2*state.showBorder);
-      mainBuff[strlen(mainBuff)] = '\0';
-      mvwaddstr(mainWin, i+state.showBorder-mainShiftView, state.showBorder, mainBuff);
-      memset(mainBuff,0,255);
-    } 
-    wattroff(mainWin, COLOR_PAIR(DIRCOLOR));
-    /*main window files*/
-    wattron(mainWin, COLOR_PAIR(FILECOLOR));
-    for (i = 0; i < dir->fileCount; i++) {
-      if (dir->files[i].type == 'e')
-        wattron(mainWin, COLOR_PAIR(EXECOLOR));
-      else
-        wattron(mainWin, COLOR_PAIR(FILECOLOR));
- 
-      if ((int)strlen(dir->files[i].name) > dis->mainWinWidth-2)
-        strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
-      else
-        strncpy(mainBuff, dir->files[i].name, dis->mainWinWidth-2);
-      mainBuff[strlen(mainBuff)] = '\0';
-      mvwaddstr(mainWin, dir->folderCount+i+state.showBorder-mainShiftView, 
-          state.showBorder, mainBuff);
-      memset(mainBuff,0,255);
-      /*display file info*/
-      /*if (i == dir->selected - dir->folderCount)
-        printw("\t%lld Bytes", dir->files[dir->selected - dir->folderCount].bytesize);*/
-    }
-    wattroff(mainWin, COLOR_PAIR(FILECOLOR));
-    wattroff(mainWin, COLOR_PAIR(EXECOLOR));
-    mvwchgat(mainWin, dir->selected+state.showBorder-mainShiftView, 
-        state.showBorder, dis->mainWinWidth-1-state.showBorder, A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
-  }
-  /*left window folders*/
-  if (dis->leftWinWidth-2 > 0) {
-    int i;
-    wattron(leftWin, COLOR_PAIR(DIRCOLOR));
-    for (i = 0; i < top->folderCount && i < dis->height-3; i++) {
-      if ((int)strlen(top->folders[i].name) > dis->leftWinWidth-2) 
-        strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2); 
-      else 
-        strncpy(leftBuff, top->folders[i].name, dis->leftWinWidth-2);
-      leftBuff[strlen(leftBuff)] = '\0';
-      mvwaddstr(leftWin, i+state.showBorder, state.showBorder, leftBuff);
-      memset(leftBuff,0,255);
-    }
-    wattroff(leftWin, COLOR_PAIR(DIRCOLOR));
-    /*left window files*/
-    wattron(leftWin, COLOR_PAIR(FILECOLOR));
-    for (i = 0; i < top->fileCount && i+top->folderCount < dis->height-3; i++) {
-      if (top->files[i].type == 'e') wattron(leftWin, COLOR_PAIR(EXECOLOR));
-      else wattron(leftWin, COLOR_PAIR(FILECOLOR));
- 
-      if ((int)strlen(top->files[i].name) > dis->leftWinWidth-2) strncpy(leftBuff, top->files[i].name, dis->leftWinWidth-2); 
-      else strncpy(leftBuff, top->files[i].name, dis->leftWinWidth-2);
-      leftBuff[strlen(leftBuff)] = '\0';
-      mvwaddstr(leftWin, top->folderCount+i+state.showBorder, state.showBorder, leftBuff);
-      memset(leftBuff,0,255);
-    }
-    wattroff(leftWin, COLOR_PAIR(EXECOLOR));
-    if (top->files[top->selected].type == 'z') mvwchgat(leftWin, top->selected+state.showBorder, state.showBorder, 
-                                                          dis->leftWinWidth-1-state.showBorder, A_BOLD, ROOTCOLOR, NULL); 
-    else mvwchgat(leftWin, top->selected+state.showBorder, state.showBorder, dis->leftWinWidth-1-state.showBorder, 
-                                                          A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
-  }
-  if (dis->rightWinWidth-2 > 0) {
-    /*folder is selected */
-    /*display subdir folders*/
-    if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir != NULL) {
-      int folderCount = dir->folders[dir->selected].subdir->folderCount; 
-      int fileCount = dir->folders[dir->selected].subdir->fileCount;
-      int i;
-      wattron(rightWin, COLOR_PAIR(DIRCOLOR));
-      for (i = 0; i < folderCount && i < dis->height-3; i++) {
-        int nameLength = strlen(dir->folders[dir->selected].subdir->folders[i].name);
-        if (nameLength > dis->rightWinWidth-2) 
-          strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2); 
-        else 
-          strncpy(rightBuff, dir->folders[dir->selected].subdir->folders[i].name, dis->rightWinWidth-2);
-        rightBuff[nameLength] = '\0';
- 
-        mvwprintw(rightWin, i+state.showBorder, state.showBorder, "%s", rightBuff);
-        memset(rightBuff,0,255);
-      } 
-
-      wattroff(rightWin, COLOR_PAIR(DIRCOLOR));
-      /*display subdir files*/
-      wattron(rightWin, COLOR_PAIR(FILECOLOR));
-      for (i = 0; i < fileCount && i+folderCount < dis->height-3; i++) {
-        if (dir->folders[dir->selected].subdir->files[i].type == 'e') 
-          wattron(rightWin, COLOR_PAIR(EXECOLOR));
-        else 
-          wattron(rightWin, COLOR_PAIR(FILECOLOR));
- 
-        int nameLength = strlen(dir->folders[dir->selected].subdir->files[i].name);
-        if (nameLength > dis->rightWinWidth-2) 
-          strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2); 
-        else 
-          strncpy(rightBuff, dir->folders[dir->selected].subdir->files[i].name, dis->rightWinWidth-2);
-        rightBuff[nameLength] = '\0';
-
-        mvwprintw(rightWin, folderCount+i+state.showBorder, state.showBorder, "%s",  rightBuff);
-        memset(rightBuff,0,255);
-      }
-      wattroff(leftWin, COLOR_PAIR(FILECOLOR)); 
-      wattroff(leftWin, COLOR_PAIR(EXECOLOR)); 
-      mvwchgat(rightWin, 
-          dir->folders[dir->selected].subdir->selected+state.showBorder, 
-          state.showBorder, dis->rightWinWidth-1-state.showBorder, 
-          A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
-    /*display currently selected file preview*/
-    } else if (dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount) {
-      if (dir->files[dir->selected - dir->folderCount].preview == NULL) 
-        dir->files[dir->selected - dir->folderCount].preview = get_file_preview(dir->files[dir->selected - dir->folderCount].path);
-      if (dir->files[dir->selected - dir->folderCount].preview != NULL) 
-        mvwprintw(rightWin, state.showBorder, state.showBorder, "%s", dir->files[dir->selected - dir->folderCount].preview);
-      else
-        mvwprintw(rightWin, state.showBorder, state.showBorder, "%s\nOwner: %s\nSize: %lld Bytes\nDate: %s\n", 
-            dir->files[dir->selected - dir->folderCount].name,
-            dir->files[dir->selected - dir->folderCount].owner,
-            dir->files[dir->selected - dir->folderCount].bytesize,
-            dir->files[dir->selected - dir->folderCount].date);
-    }
-  }
-
-  if (state.showBorder) {
-    wattron(mainWin, COLOR_PAIR(BORDERCOLOR));
-    wattron(leftWin, COLOR_PAIR(BORDERCOLOR));
-    wattron(rightWin, COLOR_PAIR(BORDERCOLOR));
-    box(leftWin, 0, 0);
-    box(mainWin, 0, 0);
-    box(rightWin, 0, 0);
-    wattroff(mainWin, COLOR_PAIR(BORDERCOLOR));
-    wattroff(leftWin, COLOR_PAIR(BORDERCOLOR));
-    wattroff(rightWin, COLOR_PAIR(BORDERCOLOR)); 
-  }
+  /*draw three windows*/
+  draw_window(mainWin, dis->mainWinWidth, dis->height, dir, DIR_MODE);
+  draw_window(leftWin, dis->leftWinWidth, dis->height, top, DIR_MODE);
+  if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir != NULL)
+    draw_window(rightWin, dis->rightWinWidth, dis->height, dir->folders[dir->selected].subdir, DIR_MODE);
+  else if (dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount)
+    draw_window(rightWin, dis->rightWinWidth, dis->height, dir, PREVIEW_MODE);
 
   refresh();  
   wrefresh(leftWin);
