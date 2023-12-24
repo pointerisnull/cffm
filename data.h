@@ -24,12 +24,15 @@ struct File {
   char *preview;
   unsigned int ownerUID;
   long long bytesize;
-  long long date;
+  long date_unix;
+  char date[64];
+  char owner[64];
 };
 
 struct Folder {
   char name[MAXFILENAME];
   char path[MAXPATHNAME];
+  char date[64];
   Directory *subdir;
 };
 
@@ -45,7 +48,9 @@ struct Directory {
   int broken;
 };
 
-Directory *init_directories(char *path);
+Directory *init_directories(char *path, Directory *rootdir);
 void read_directory(const char *filePath, Directory *dir);
+void update_directory(Directory *dir);
+void free_directory_tree(Directory *dir);
 
 #endif
