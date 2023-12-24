@@ -3,7 +3,7 @@
 
 CFFM is a minimalist terminal-based file manager. Heavily inspired by similar terminal based file managers such as `ranger` and `lf`, CFFM seeks to provide a clean, snappy, and customizable file managing experience.
 
-## Whats New [v0.3.0]
+## What's New [v0.3.0]
 -Decided to go with a suckless-style config.h configuration for CFFM instead of a config file.
 
 -Directory re-loading, for now just by pressing 'u'.
