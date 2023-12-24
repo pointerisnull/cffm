@@ -110,7 +110,7 @@ char *get_file_preview(char *filePath) {
   char *buffer = malloc(sizeof(char) * length+1);
   char c;
   int i = 0;
-  while( (c = fgetc(fp)) != EOF && ftell(fp) < length ) {
+  while ( (c = fgetc(fp)) != EOF && ftell(fp) < length ) {
     buffer[i] = c;
     i++;
   }
@@ -132,7 +132,7 @@ Display *init_display(Directory *dir) {
   initscr();
   cbreak();
   curs_set(0);
-  nodelay(dis->mainWin, TRUE);
+  /*nodelay(dis->mainWin, TRUE);*/
   if (has_colors()) start_color();
   use_default_colors();
   /*init colors*/
@@ -148,11 +148,13 @@ Display *init_display(Directory *dir) {
   dis->mainWinWidth = COLS/2 - (COLS/8);
   dis->leftWinWidth = COLS/8;
   dis->rightWinWidth = COLS/2;
+  dis->previewWidth = COLS/2 - (2*state.showBorder);
   
   dis->root = newwin(LINES, COLS, 0, 0);
   dis->leftWin = newwin(LINES-1, dis->leftWinWidth, 1, 0);
   dis->mainWin = newwin(LINES-1, dis->mainWinWidth, 1, dis->leftWinWidth);
   dis->rightWin = newwin(LINES-1, dis->rightWinWidth, 1, COLS/2);
+  dis->previewWin = newwin(LINES-1, dis->previewWidth, 1, COLS/2+state.showBorder);
   
   keypad(dis->mainWin, true);
 
@@ -188,56 +190,55 @@ void get_updates(Display *dis) {
     dis->mainWinWidth = w.ws_col/2 - (w.ws_col/8);
     dis->leftWinWidth = w.ws_col/8;
     dis->rightWinWidth = w.ws_col/2;
+    dis->previewWidth = COLS/2 - (2*state.showBorder);
+    dis->previewHeight = dis->height-(2*state.showBorder);
+    
     wresize(dis->leftWin, dis->height, dis->leftWinWidth);
     wresize(dis->mainWin, dis->height, dis->mainWinWidth);
     wresize(dis->rightWin, dis->height, dis->rightWinWidth);
+    wresize(dis->previewWin, dis->previewHeight, dis->previewWidth);
 
     mvwin(dis->leftWin, 1, 0);
     mvwin(dis->mainWin, 1, dis->leftWinWidth);
     mvwin(dis->rightWin, 1, w.ws_col/2);
+    mvwin(dis->previewWin, 1+state.showBorder, w.ws_col/2+state.showBorder);
   }
 }
 
 void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
   switch (mode) {
-    case 0:
-      char buffer[256];
+    case DIR_MODE:
+      /*draws the normal directory window*/
+      werase(win);
+      char buffer[MAXLINEBUFFER];
       int shiftview = 0;
       /* total files > window height */
       if ((dir->folderCount+dir->fileCount > height-1-2*state.showBorder) 
       && (dir->selected+state.shiftPos > height-1-2*state.showBorder-1)) 
         shiftview = dir->selected+state.shiftPos - height+1+2*state.showBorder;
-        /*printw("\tShift: %d\t", shiftview);*/
-      if (width > 0) {
-        /*main window folders*/
+      if (width-1 > 0) {
+        /*window folders*/
         wattron(win, COLOR_PAIR(DIRCOLOR));
         int i;
         for (i = 0; i < dir->folderCount; i++) {
-          if ((int)strlen(dir->folders[i].name) >width-2*state.showBorder)
-            strncpy(buffer, dir->folders[i].name,width-2*state.showBorder);
-          else
-            strncpy(buffer, dir->folders[i].name,width-2*state.showBorder);
+          strncpy(buffer, dir->folders[i].name,width-1-state.showBorder);
           buffer[strlen(buffer)] = '\0';
           mvwaddstr(win, i+state.showBorder-shiftview, state.showBorder, buffer);
-          memset(buffer,0,255);
+          memset(buffer,0,MAXLINEBUFFER-1);
         } 
         wattroff(win, COLOR_PAIR(DIRCOLOR));
-        /*main window files*/
+        /*window files*/
         wattron(win, COLOR_PAIR(FILECOLOR));
         for (i = 0; i < dir->fileCount; i++) {
           if (dir->files[i].type == 'e')
             wattron(win, COLOR_PAIR(EXECOLOR));
           else
             wattron(win, COLOR_PAIR(FILECOLOR));
- 
-          if ((int)strlen(dir->files[i].name) >width-2)
-            strncpy(buffer, dir->files[i].name,width-2);
-          else
-            strncpy(buffer, dir->files[i].name,width-2);
+          strncpy(buffer, dir->files[i].name,width-1-state.showBorder);
           buffer[strlen(buffer)] = '\0';
           mvwaddstr(win, dir->folderCount+i+state.showBorder-shiftview, 
-              state.showBorder, buffer);
-          memset(buffer,0,255);
+                    state.showBorder, buffer);
+          memset(buffer,0,MAXLINEBUFFER-1);
         }
         wattroff(win, COLOR_PAIR(FILECOLOR));
         wattroff(win, COLOR_PAIR(EXECOLOR));
@@ -249,25 +250,34 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
         box(win, 0, 0);
         wattroff(win, COLOR_PAIR(BORDERCOLOR));
       }
-  
+      wrefresh(win);
       break;
-    case 1:
-      /* PREVIEW MODE */
-      /*display currently selected file preview*/
+    case PREVIEW_MODE:
+      /*display a file preview*/
+      werase(win);
       if (dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount) {
         wattron(win, COLOR_PAIR(TEXTCOLOR));
         if (dir->files[dir->selected - dir->folderCount].preview == NULL) 
           dir->files[dir->selected - dir->folderCount].preview = get_file_preview(dir->files[dir->selected - dir->folderCount].path);
         if (dir->files[dir->selected - dir->folderCount].preview != NULL) 
-          mvwprintw(win, state.showBorder, state.showBorder, "%s", dir->files[dir->selected - dir->folderCount].preview);
+          mvwprintw(win, 0, 0, "%s", dir->files[dir->selected - dir->folderCount].preview);
         else
-          mvwprintw(win, state.showBorder, state.showBorder, "%s\nOwner: %s\nSize: %lld Bytes\nDate: %s\n", 
+          mvwprintw(win, 0, 0, "%s\nOwner: %s\nSize: %lld Bytes\nDate: %s\n", 
               dir->files[dir->selected - dir->folderCount].name,
               dir->files[dir->selected - dir->folderCount].owner,
               dir->files[dir->selected - dir->folderCount].bytesize,
               dir->files[dir->selected - dir->folderCount].date);
         wattroff(win, COLOR_PAIR(TEXTCOLOR));
       }
+      wrefresh(win);
+      break;
+    case BOX_MODE:
+      /*draw empty box*/
+      werase(win);
+      wattron(win, COLOR_PAIR(BORDERCOLOR));
+      box(win, 0, 0);
+      wattroff(win, COLOR_PAIR(BORDERCOLOR));
+      wrefresh(win);
       break;
     default:
       break;
@@ -276,15 +286,13 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
 
 void update_display(Display *dis, Directory **dirptr) {
   Directory *dir = *dirptr;
+  Directory *top = dir->parent;
   WINDOW *leftWin = dis->leftWin;
   WINDOW *mainWin = dis->mainWin;
   WINDOW *rightWin = dis->rightWin;
-  Directory *top = dir->parent;
-  
-  werase(leftWin);
-  werase(mainWin);
-  werase(rightWin);
+  WINDOW *previewWin = dis->previewWin;
  
+  erase();
   attron(A_BOLD);
   attron(COLOR_PAIR(TITLECOLOR));
   /*print currently selected directory path*/
@@ -292,27 +300,24 @@ void update_display(Display *dis, Directory **dirptr) {
     printw("%s", dir->folders[dir->selected].path);
   else if (dir->selected < (dir->folderCount + dir->fileCount))
     printw("%s", dir->files[dir->selected - dir->folderCount].path);
-  /*draw three windows*/
+
+  attroff(COLOR_PAIR(TITLECOLOR));
+  attroff(A_BOLD);
+  refresh();
+  /*draw windows*/
   draw_window(mainWin, dis->mainWinWidth, dis->height, dir, DIR_MODE);
   draw_window(leftWin, dis->leftWinWidth, dis->height, top, DIR_MODE);
   if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir != NULL)
     draw_window(rightWin, dis->rightWinWidth, dis->height, dir->folders[dir->selected].subdir, DIR_MODE);
-  else if (dir->selected > dir->folderCount && dir->selected < dir->folderCount + dir->fileCount)
-    draw_window(rightWin, dis->rightWinWidth, dis->height, dir, PREVIEW_MODE);
-
-  refresh();  
-  wrefresh(leftWin);
-  wrefresh(rightWin);
-  wrefresh(mainWin);
+  else {
+    if (state.showBorder) draw_window(rightWin, dis->rightWinWidth, dis->height, dir, BOX_MODE);
+    draw_window(previewWin, dis->previewWidth, dis->previewHeight, dir, PREVIEW_MODE);
+  }
   /*wait for user input*/
-  int key = wgetch(mainWin);
+  int key = getch();
   if (key != ERR)
     handle_input(key, dir, dirptr);
-
-  attroff(COLOR_PAIR(TITLECOLOR));
-  attroff(A_BOLD);
  
-  erase();
 }
 
 void kill_display(Display *dis) {

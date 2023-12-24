@@ -3,16 +3,16 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.3.1 (indev)"
+#define VERSION "v.0.3.2 (indev)"
+
+#include "data.h"
+#include "display.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <ncurses.h>
-#include "data.h"
-#include "display.h"
-#include "config.h"
 
 void assign_settings();
 void init_program_state();

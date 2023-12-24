@@ -1,6 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
-/*color indexes, you shouldn't modify these*/
+/*you shouldn't modify these*/
 #define TERMCOLOR -1
 #define RED     1
 #define GREEN   2
@@ -13,19 +13,19 @@
 /*window modes*/
 #define DIR_MODE      0
 #define PREVIEW_MODE  1
-#define CMD_MODE      2
+#define BOX_MODE      2
 
 /*********************************\
 * set your desired values below.  *
 \*********************************/
 
 #define BACKGROUND    TERMCOLOR
-#define BORDERCOLOR   CYAN
-#define CURSORCOLOR   CYAN
-#define TITLECOLOR    GREEN
-#define DIRCOLOR      CYAN 
+#define BORDERCOLOR   PURPLE
+#define CURSORCOLOR   PURPLE
+#define TITLECOLOR    WHITE
+#define DIRCOLOR      PURPLE 
 #define ROOTCOLOR     RED
-#define FILECOLOR     BLUE
+#define FILECOLOR     WHITE
 #define TEXTCOLOR     WHITE
 #define EXECOLOR      RED
 #define IMAGECOLOR    CYAN 

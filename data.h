@@ -3,7 +3,6 @@
 
 #define MAXFILENAME 256
 #define MAXPATHNAME 4096
-#define MAXPREVIEWSIZE 4096
 
 typedef struct File File;
 typedef struct Folder Folder;
