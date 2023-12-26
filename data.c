@@ -13,7 +13,7 @@
 /*main functions*/
 void read_directory(const char *filepath, Directory *dir);
 void update_directory(Directory *dir);
-void free_directory_tree(Directory *dir);
+void free_directory_tree(Directory **dir, int free_src_dir);
 /*utility functions*/
 int open_and_read(const char *filepath, Directory *dir);
 int is_directory(const char *path);
@@ -62,22 +62,35 @@ void update_directory(Directory *dir) {
   int selected = dir->selected;
   char path[MAXPATHNAME] = {0};
   strncpy(path, dir->path, MAXPATHNAME);
-  free_directory_tree(dir);
+  free_directory_tree(&dir, 0);
   read_directory(path, dir);
   dir->parent = parent;
   dir->selected = selected;
 }
 /*frees everything except the source directory inputed */
-void free_directory_tree(Directory *dir) {
+void free_directory_tree(Directory **dirptr, int free_src_dir) {
+  if (*dirptr == NULL) return;
   int i;
-  for (i = 0; i < dir->folderCount; i++) {
-    if(dir->folders[i].subdir != NULL) {
-      free_directory_tree(dir->folders[i].subdir);
-      free(dir->folders[i].subdir);
-    }
-  }
+  Directory *dir = *dirptr;
+  printf("dir in: %s\n", dir->path);
+  for (i = 0; i < dir->folderCount; i++)
+    if (dir->folders[i].subdir != NULL) 
+      free_directory_tree(&dir->folders[i].subdir, 1);
+
   if (dir->folders != NULL) free(dir->folders);
+  dir->folders = NULL;
+  dir->folderCount = 0;
   if (dir->files != NULL) free(dir->files);
+  dir->files = NULL;
+  dir->fileCount = 0;
+
+  if (free_src_dir == 1) { 
+    printf("freeing %s\n", dir->path);
+    if(dir->parent->folderCount > dir->parent->selected)
+      dir->parent->folders[dir->parent->selected].subdir = NULL;
+    free(*dirptr);
+    *dirptr = NULL;
+  }
 }
 
 /*populates the dir struct*/

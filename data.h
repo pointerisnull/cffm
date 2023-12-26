@@ -50,6 +50,6 @@ struct Directory {
 Directory *init_directories(char *path, Directory *rootdir);
 void read_directory(const char *filePath, Directory *dir);
 void update_directory(Directory *dir);
-void free_directory_tree(Directory *dir);
+void free_directory_tree(Directory **dir, int free_src_dir);
 
 #endif

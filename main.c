@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.3.2 (indev)"
+#define VERSION "v.0.3.3 (indev)"
 
 #include "data.h"
 #include "display.h"
@@ -50,7 +50,11 @@ int main(int argc,  char *argv[]) {
 	kill_display(window);
   free(root->parent->files);
   free(root->parent);
-  free_directory_tree(root);
+  free_directory_tree(&directory, 1);
+  free_directory_tree(&root, 1);
+
+  if(directory != NULL) printf("Leaky Memory!\n");
+  else printf("Everything freed correctly.\n");
   return 0;
 }
 
