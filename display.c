@@ -15,6 +15,7 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
 char *get_file_preview(char *filePath);
 void read_selected(Directory *dir);
 void cmd_window(WINDOW *win, int width, int height, Directory *current);
+void exec_cmd(const char *buffer);
 
 void handle_input(int key, Display *dis, Directory *dir, Directory **dirptr) {
   switch(key) {
@@ -63,7 +64,13 @@ void handle_input(int key, Display *dis, Directory *dir, Directory **dirptr) {
             *dirptr = temp;
           }
           read_selected(temp);
-        } 
+        }
+        /*is file, execute it*/
+      } else if (dir->selected < dir->folderCount + dir->fileCount) {
+          char buffer[4096];
+          strncpy(buffer, "mimeopen ", 10);
+          strcat(buffer, dir->files[dir->selected-dir->folderCount].name);
+          exec_cmd(buffer);
       }
       break;
     case key_show_border:
@@ -82,6 +89,13 @@ void handle_input(int key, Display *dis, Directory *dir, Directory **dirptr) {
     default:
       break;
   }
+}
+
+void exec_cmd(const char *buffer) {
+  def_prog_mode();
+  endwin();
+  system(buffer);
+  reset_prog_mode();
 }
 
 void cmd_window(WINDOW *win, int width, int height, Directory *current) {
@@ -103,10 +117,7 @@ void cmd_window(WINDOW *win, int width, int height, Directory *current) {
     }
   }
   if (key == '\n') {
-    def_prog_mode();
-    endwin();
-    system(buff);
-    reset_prog_mode();
+    exec_cmd(buff);
     update_directory(current);
   }
 }
@@ -192,8 +203,6 @@ Display *init_display(Directory *dir) {
   dis->previewWin = newwin(LINES-1, dis->previewWidth, 1, COLS/2+state.showBorder);
   dis->cmdWin = newwin(dis->cmdHeight, dis->cmdWidth, dis->height/2 - 3, dis->width/2 - dis->cmdWidth);
   
-  /*keypad(dis->mainWin, true);*/
-
   wattron(dis->leftWin, COLOR_PAIR(BORDERCOLOR));
   wattron(dis->mainWin, COLOR_PAIR(BORDERCOLOR));
   wattron(dis->rightWin, COLOR_PAIR(BORDERCOLOR));
@@ -282,8 +291,12 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
         }
         wattroff(win, COLOR_PAIR(FILECOLOR));
         wattroff(win, COLOR_PAIR(EXECOLOR));
-        mvwchgat(win, dir->selected+state.showBorder-shiftview, 
-        state.showBorder, width-1-state.showBorder, A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
+        if (dir->files[0].type == 'z')
+          mvwchgat(win, dir->selected+state.showBorder-shiftview, 
+          state.showBorder, width-1-state.showBorder, A_STANDOUT | A_BOLD, ROOTCOLOR, NULL);
+        else
+          mvwchgat(win, dir->selected+state.showBorder-shiftview, 
+          state.showBorder, width-1-state.showBorder, A_STANDOUT | A_BOLD, CURSORCOLOR, NULL);
       } 
       if (state.showBorder) {
         wattron(win, COLOR_PAIR(BORDERCOLOR));

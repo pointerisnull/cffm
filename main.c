@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.4.2 (indev)"
+#define VERSION "v.0.5.0 (indev)"
 
 #include "data.h"
 #include "display.h"
@@ -48,8 +48,6 @@ int main(int argc,  char *argv[]) {
   }
 
 	kill_display(window);
-  printf("%s\n", root->path);
-  printf("%s\n", directory->path);
   free(root->parent->files);
   free(root->parent);
   if (strncmp(directory->path, "/", 2) != 0) 

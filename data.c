@@ -74,7 +74,6 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (*dirptr == NULL) return;
   int i;
   Directory *dir = *dirptr;
-  printf("dir in: %s\n", dir->path);
   for (i = 0; i < dir->folderCount; i++)
     if (dir->folders[i].subdir != NULL) 
       free_directory_tree(&dir->folders[i].subdir, 1);

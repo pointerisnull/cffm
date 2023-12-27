@@ -3,12 +3,10 @@
 
 CFFM is a minimalist terminal-based file manager. Heavily inspired by similar terminal based file managers such as `ranger` and `lf`, CFFM seeks to provide a clean, snappy, and customizable file managing experience.
 
-## What's New [v0.4.0]
--Execute shell commands in the current directory with `:`.
+## What's New [v0.5.0]
+-Open files. The programs used to open are determined by your system's mimeapp settings (.config/mimeapp.list).
 
 -Various bug fixes
-
--Fixed all memory leaks.
 
 ## Download
 You can download a static "just works" binary from the releases section when CFFM 1.0 releases.
