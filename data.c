@@ -64,15 +64,17 @@ void update_directory(Directory *dir) {
   strncpy(path, dir->path, MAXPATHNAME);
   free_directory_tree(&dir, 0);
   read_directory(path, dir);
+  if (strncmp(dir->path, "/", 2) != 0)
+    parent->folders[parent->selected].subdir = dir;
   dir->parent = parent;
   dir->selected = selected;
 }
-/*frees everything except the source directory inputed */
+/*frees everything in the source directory's tree*/
 void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (*dirptr == NULL) return;
   int i;
   Directory *dir = *dirptr;
-  printf("dir in: %s\n", dir->path);
+  /*printf("dir in: %s\n", dir->path);*/
   for (i = 0; i < dir->folderCount; i++)
     if (dir->folders[i].subdir != NULL) 
       free_directory_tree(&dir->folders[i].subdir, 1);
@@ -83,10 +85,9 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (dir->files != NULL) free(dir->files);
   dir->files = NULL;
   dir->fileCount = 0;
-
-  if (free_src_dir == 1) { 
-    printf("freeing %s\n", dir->path);
-    if(dir->parent->folderCount > dir->parent->selected)
+  /*if freeing the source directory itself, free it*/
+  if (free_src_dir) { 
+    if (dir->parent->folderCount > dir->parent->selected) /*if not root dir*/
       dir->parent->folders[dir->parent->selected].subdir = NULL;
     free(*dirptr);
     *dirptr = NULL;

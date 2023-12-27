@@ -9,11 +9,12 @@
 #include "config.h"
 
 /*utility functions*/
-void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode);
+void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, const char *buffer);
 char *get_file_preview(char *filePath);
 void read_selected(Directory *dir);
+void cmd_window(WINDOW *win, int width, int height, Directory *current);
 
-void handle_input(int key, Directory *dir, Directory **dirptr) {
+void handle_input(int key, Display *dis, Directory *dir, Directory **dirptr) {
   switch(key) {
     case key_left:
       if (strncmp(dir->path, "/", 2) != 0) {
@@ -73,8 +74,36 @@ void handle_input(int key, Directory *dir, Directory **dirptr) {
       update_directory(dir);
       read_selected(dir);
       break;
+    case key_cmd:
+      cmd_window(dis->cmdWin, dis->cmdWidth, dis->cmdHeight, dir);
+      break;
     default:
       break;
+  }
+}
+
+void cmd_window(WINDOW *win, int width, int height, Directory *current) {
+  int key = 0;
+  int i = 0;
+  char buff[2048] = {'\0'};
+  /*draw_window(win, width, height, NULL, CMD_MODE, NULL);*/
+  while (key != '\n' && key != 27) {
+    draw_window(win, width, height, NULL, CMD_MODE, buff);
+    key = wgetch(win);
+    if (key != ERR) {
+      if (key != 127) {
+        buff[i] = key;
+        i++;
+      } else if (i > 0) {
+        i--;
+        buff[i] = '\0';
+      }
+    }
+  }
+  if (key == '\n') {
+    strncat(buff, " >/dev/null", 12);
+    system(buff);
+    update_directory(current);
   }
 }
 
@@ -149,14 +178,17 @@ Display *init_display(Directory *dir) {
   dis->leftWinWidth = COLS/8;
   dis->rightWinWidth = COLS/2;
   dis->previewWidth = COLS/2 - (2*state.showBorder);
+  dis->cmdWidth = COLS/3;
+  dis->cmdHeight = 3;
   
   dis->root = newwin(LINES, COLS, 0, 0);
   dis->leftWin = newwin(LINES-1, dis->leftWinWidth, 1, 0);
   dis->mainWin = newwin(LINES-1, dis->mainWinWidth, 1, dis->leftWinWidth);
   dis->rightWin = newwin(LINES-1, dis->rightWinWidth, 1, COLS/2);
   dis->previewWin = newwin(LINES-1, dis->previewWidth, 1, COLS/2+state.showBorder);
+  dis->cmdWin = newwin(dis->cmdHeight, dis->cmdWidth, dis->height/2 - 3, dis->width/2 - dis->cmdWidth);
   
-  keypad(dis->mainWin, true);
+  /*keypad(dis->mainWin, true);*/
 
   wattron(dis->leftWin, COLOR_PAIR(BORDERCOLOR));
   wattron(dis->mainWin, COLOR_PAIR(BORDERCOLOR));
@@ -164,6 +196,7 @@ Display *init_display(Directory *dir) {
   wattron(dis->mainWin, A_BOLD);
   wattron(dis->leftWin, A_BOLD);
   wattron(dis->rightWin, A_BOLD);
+  wattron(dis->cmdWin, A_BOLD);
 
   if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir == NULL) {
     Directory *subtemp = malloc(sizeof(Directory));
@@ -192,20 +225,23 @@ void get_updates(Display *dis) {
     dis->rightWinWidth = w.ws_col/2;
     dis->previewWidth = COLS/2 - (2*state.showBorder);
     dis->previewHeight = dis->height-(2*state.showBorder);
+    dis->cmdWidth = COLS/2;
     
     wresize(dis->leftWin, dis->height, dis->leftWinWidth);
     wresize(dis->mainWin, dis->height, dis->mainWinWidth);
     wresize(dis->rightWin, dis->height, dis->rightWinWidth);
     wresize(dis->previewWin, dis->previewHeight, dis->previewWidth);
+    wresize(dis->cmdWin, dis->cmdHeight, dis->cmdWidth);
 
     mvwin(dis->leftWin, 1, 0);
     mvwin(dis->mainWin, 1, dis->leftWinWidth);
     mvwin(dis->rightWin, 1, w.ws_col/2);
     mvwin(dis->previewWin, 1+state.showBorder, w.ws_col/2+state.showBorder);
+    mvwin(dis->cmdWin, dis->height/2 - 3, dis->width/2 - dis->cmdWidth/2);
   }
 }
 
-void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
+void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, const char *line_buffer) {
   switch (mode) {
     case DIR_MODE:
       /*draws the normal directory window*/
@@ -279,6 +315,15 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode) {
       wattroff(win, COLOR_PAIR(BORDERCOLOR));
       wrefresh(win);
       break;
+
+    case CMD_MODE:
+      werase(win);
+      wattron(win, COLOR_PAIR(BORDERCOLOR));
+      box(win, 0, 0);
+      wattroff(win, COLOR_PAIR(BORDERCOLOR));
+      mvwprintw(win, 1, 1, "%s_", line_buffer);
+      wrefresh(win);
+      break;
     default:
       break;
   }
@@ -305,18 +350,19 @@ void update_display(Display *dis, Directory **dirptr) {
   attroff(A_BOLD);
   refresh();
   /*draw windows*/
-  draw_window(mainWin, dis->mainWinWidth, dis->height, dir, DIR_MODE);
-  draw_window(leftWin, dis->leftWinWidth, dis->height, top, DIR_MODE);
+  draw_window(mainWin, dis->mainWinWidth, dis->height, dir, DIR_MODE, NULL);
+  draw_window(leftWin, dis->leftWinWidth, dis->height, top, DIR_MODE, NULL);
+  read_selected(dir);
   if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir != NULL)
-    draw_window(rightWin, dis->rightWinWidth, dis->height, dir->folders[dir->selected].subdir, DIR_MODE);
+    draw_window(rightWin, dis->rightWinWidth, dis->height, dir->folders[dir->selected].subdir, DIR_MODE, NULL);
   else {
-    if (state.showBorder) draw_window(rightWin, dis->rightWinWidth, dis->height, dir, BOX_MODE);
-    draw_window(previewWin, dis->previewWidth, dis->previewHeight, dir, PREVIEW_MODE);
+    if (state.showBorder) draw_window(rightWin, dis->rightWinWidth, dis->height, dir, BOX_MODE, NULL);
+    draw_window(previewWin, dis->previewWidth, dis->previewHeight, dir, PREVIEW_MODE, NULL);
   }
   /*wait for user input*/
   int key = getch();
   if (key != ERR)
-    handle_input(key, dir, dirptr);
+    handle_input(key, dis, dir, dirptr);
  
 }
 

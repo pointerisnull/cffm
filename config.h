@@ -14,6 +14,7 @@
 #define DIR_MODE      0
 #define PREVIEW_MODE  1
 #define BOX_MODE      2
+#define CMD_MODE      3
 
 /*********************************\
 * set your desired values below.  *
@@ -42,6 +43,7 @@
 #define key_right       'l' /*down dir*/
 #define key_update      'u' /*update directory*/
 #define key_quit        'q'
+#define key_cmd         ':'
 #define key_select      's'
 #define key_rename      't'
 #define key_cut         'x'
