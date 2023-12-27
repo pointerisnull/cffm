@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.4.0 (indev)"
+#define VERSION "v.0.4.1 (indev)"
 
 #include "data.h"
 #include "display.h"
@@ -59,6 +59,7 @@ int main(int argc,  char *argv[]) {
     printf("Leaky Memory!\n");
   else 
     printf("All data freed correctly.\n");
+
   return 0;
 }
 

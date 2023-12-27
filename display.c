@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
 #include "display.h"
@@ -101,8 +103,10 @@ void cmd_window(WINDOW *win, int width, int height, Directory *current) {
     }
   }
   if (key == '\n') {
-    strncat(buff, " >/dev/null", 12);
+    def_prog_mode();
+    endwin();
     system(buff);
+    reset_prog_mode();
     update_directory(current);
   }
 }
