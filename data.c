@@ -74,7 +74,7 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (*dirptr == NULL) return;
   int i;
   Directory *dir = *dirptr;
-  /*printf("dir in: %s\n", dir->path);*/
+  printf("dir in: %s\n", dir->path);
   for (i = 0; i < dir->folderCount; i++)
     if (dir->folders[i].subdir != NULL) 
       free_directory_tree(&dir->folders[i].subdir, 1);
@@ -160,7 +160,17 @@ int last_slash_index(char *path) {
 }
 /*initializes directories backward toward root *
 *   root<--dir<----dir<----current            */
-Directory *init_directories(char *currentPath, Directory *rootdir) {
+Directory *init_directories(char *currentPath, Directory **rootdir) {
+  /*if the current path IS root*/
+  if(strncmp(currentPath, "/", 2) == 0) {
+    Directory *root = *rootdir;
+    memset(root->path, '\0', MAXPATHNAME);
+    strncpy(root->path, "/", 2);
+    read_directory("/", root);
+    root->parent = malloc(sizeof(Directory));
+    read_directory(NULL, root->parent);
+    return root;
+  }
   Directory *current = malloc(sizeof(Directory));
   int slashCount = 0;
   int lastSlashIndex = last_slash_index(currentPath);
@@ -196,7 +206,7 @@ Directory *init_directories(char *currentPath, Directory *rootdir) {
     } else {
       /*is root dir*/
       /*Directory *root = malloc(sizeof(Directory));*/
-      Directory *root = rootdir;
+      Directory *root = *rootdir;
       memset(root->path, '\0', MAXPATHNAME);
       strncpy(root->path, "/", 2);
       read_directory("/", root);
