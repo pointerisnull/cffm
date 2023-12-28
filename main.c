@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.1 (indev)"
+#define VERSION "v.0.5.2 (indev)"
 
 #include "config.h"
 #include "hash.h"
@@ -40,9 +40,7 @@ int main(int argc,  char *argv[]) {
   init_program_state();
   if (current_path[0] == '\0') getcwd(current_path, MAXPATHNAME);
 
-  Directory *root = malloc(sizeof(Directory));
-  Directory *directory = init_directories(current_path, &root);
-  
+  Directory *directory = init_directories(current_path);
   Display *window = init_display(directory);
   
   while(state.isRunning) {
@@ -51,28 +49,7 @@ int main(int argc,  char *argv[]) {
   }
   
 	kill_display(window);
-  /*
-  printf("%s\n\n", directory->path);
-  int i;
-  for (i = 0; i < HASHTABLE_SIZE; i++) {
-    if (state.ht.entries[i].dir == NULL) {
-      printf("%d: %s\n", i, "____");
-    } else {
-      ht_entry *current = &state.ht.entries[i];
-      printf("%d: ", i);
-      while (current != NULL) {
-        Directory *dir = current->dir;
-        printf("%s ->", dir->path);
-        current = current->next;
-      }
-      if (current == NULL) printf(" %s", "end");
-      printf("\n");
- 
-    }
-  } */
-  printf("Total HashTable Collisions: %d\n", state.ht.collisions);
   free_data();
-  printf("All data freed correctly.\n");
   return 0;
 }
 
@@ -108,12 +85,10 @@ void init_program_state() {
   state.hasPerformedAction = 0;
   assign_settings(); 
   ht_init(&state.ht);
-
 }
 
 void assign_settings() {
   state.showHidden = SHOWHIDDENDEFAULT;
   state.showBorder = SHOWBORDERDEFAULT;
   state.shiftPos = SHIFTSIZE;
-
 }

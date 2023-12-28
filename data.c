@@ -12,6 +12,7 @@
 #include "data.h"
 #include "hash.h"
 /*main functions*/
+Directory *init_directories(char *path);
 void read_directory(const char *filepath, Directory *dir);
 void update_directory(Directory *dir);
 void free_directory_tree(Directory **dir, int free_src_dir);
@@ -41,7 +42,8 @@ void read_directory(const char *filepath, Directory *dir) {
     return;
   }
   dir->parent = NULL;
-  ht_insert(&state.ht, dir, get_hash(dir->path));
+  dir->ht_index = get_hash(dir->path);
+  ht_insert(&state.ht, dir, dir->ht_index);
  
   int fCount = 0;
   int dCount = 0;
@@ -164,8 +166,8 @@ int last_slash_index(char *path) {
 }
 /*initializes directories backward toward root *
 *   root<--dir<----dir<----current            */
-Directory *init_directories(char *currentPath, Directory **rootdir) {
-  /*if the current path IS root*/
+Directory *init_directories(char *currentPath) {
+  /*if the current path IS root
   if (strncmp(currentPath, "/", 2) == 0) {
     Directory *root = *rootdir;
     memset(root->path, '\0', MAXPATHNAME);
@@ -174,7 +176,7 @@ Directory *init_directories(char *currentPath, Directory **rootdir) {
     root->parent = malloc(sizeof(Directory));
     read_directory(NULL, root->parent);
     return root;
-  }
+  }*/
   Directory *current = malloc(sizeof(Directory));
   int slashCount = 0;
   int lastSlashIndex = last_slash_index(currentPath);
@@ -209,8 +211,7 @@ Directory *init_directories(char *currentPath, Directory **rootdir) {
       slashCount--;
     } else {
       /*is root dir*/
-      /*Directory *root = malloc(sizeof(Directory));*/
-      Directory *root = *rootdir;
+      Directory *root = malloc(sizeof(Directory));
       memset(root->path, '\0', MAXPATHNAME);
       strncpy(root->path, "/", 2);
       read_directory("/", root);

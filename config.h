@@ -33,7 +33,7 @@
 #define MEDIACOLOR    BLUE
 
 #define SHOWHIDDENDEFAULT 0
-#define SHOWBORDERDEFAULT 0
+#define SHOWBORDERDEFAULT 1
 /*cursor's row threshold before the file list scrolls up*/
 #define SHIFTSIZE 16
 /*key bindings*/

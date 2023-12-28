@@ -5,11 +5,20 @@
 #include <stdint.h>
 #include <string.h>
 
+/*main function defs*/
+uint64_t get_hash(char *string);
+void ht_init(Table *ht);
+void ht_insert(Table *ht, void *element, unsigned index);
+int ht_delete_element(Table *ht, char *string);
+void ht_free(Table *ht);
+/*utility*/
+void free_chain(ht_entry *head);
+
 void ht_new_entry(ht_entry *e) {
   e->next = NULL;
   e->dir = NULL;
 }
-/*FNV-1 hash function
+/*FNV-1 hash function */
 uint64_t get_hash(char *string) {
   uint64_t fnv_offset = 0xcbf29ce484222325;
   uint64_t fnv_prime = 0x00000100000001B3;
@@ -21,10 +30,6 @@ uint64_t get_hash(char *string) {
     hash ^= string[i];
   }
   return hash%HASHTABLE_SIZE;
-} */
-
-uint64_t get_hash(char *string) {
-  return strlen(string)%1;
 }
 
 void ht_insert(Table *ht, void *element, unsigned index) {
