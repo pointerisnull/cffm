@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.2 (indev)"
+#define VERSION "v.0.5.3 (indev)"
 
 #include "config.h"
 #include "hash.h"
@@ -54,9 +54,10 @@ int main(int argc,  char *argv[]) {
 }
 
 void free_directory(Directory *dir) {
-  if(dir->folders != NULL) free(dir->folders);
-  if(dir->files != NULL) free(dir->files);
-  if(dir != NULL) free(dir);
+  if (dir == NULL) return;
+  if (dir->folders != NULL) free(dir->folders);
+  if (dir->files != NULL) free(dir->files);
+  if (dir != NULL) free(dir);
 }
 
 void free_data() {
@@ -66,12 +67,15 @@ void free_data() {
   for (i = 0; i < HASHTABLE_SIZE; i++) {
     if (ht->entries[i].dir == NULL) /*most likely*/
       continue;
-    else if (ht->entries[i].next == NULL) /*most likely*/
+    else if (ht->entries[i].next == NULL) { /*most likely*/
       free_directory(ht->entries[i].dir);
+      ht->entries[i].dir = NULL;
+    }
     else { /*worst case, values are in a chain*/
       ht_entry *current = &ht->entries[i];
       while (current != NULL) {
         free_directory(current->dir);
+        current->dir = NULL;
         current = current->next;
       }
     }

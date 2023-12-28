@@ -81,7 +81,7 @@ int ht_delete_element(Table *ht, char *string) {
     if (found != 0) return 1;
     current->dir = NULL;
     prev->next = next;
-    free(current);
+    if (current != NULL) free(current);
 
   }
   return 0;

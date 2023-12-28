@@ -94,10 +94,11 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (free_src_dir) { 
     if (dir->parent->folderCount > dir->parent->selected) /*if not root dir*/
       dir->parent->folders[dir->parent->selected].subdir = NULL;
-    ht_delete_element(&state.ht, dir->path);
     free(*dirptr);
     *dirptr = NULL;
   }
+  /*remove directory from hashmap*/
+  ht_delete_element(&state.ht, dir->path);
 }
 
 /*populates the dir struct*/
@@ -167,16 +168,16 @@ int last_slash_index(char *path) {
 /*initializes directories backward toward root *
 *   root<--dir<----dir<----current            */
 Directory *init_directories(char *currentPath) {
-  /*if the current path IS root
+  /*if the current path IS root*/
   if (strncmp(currentPath, "/", 2) == 0) {
-    Directory *root = *rootdir;
+    Directory *root = malloc(sizeof(Directory));
     memset(root->path, '\0', MAXPATHNAME);
     strncpy(root->path, "/", 2);
     read_directory("/", root);
     root->parent = malloc(sizeof(Directory));
     read_directory(NULL, root->parent);
     return root;
-  }*/
+  }
   Directory *current = malloc(sizeof(Directory));
   int slashCount = 0;
   int lastSlashIndex = last_slash_index(currentPath);
