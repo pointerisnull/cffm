@@ -8,8 +8,9 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include "data.h"
 #include "config.h"
+#include "data.h"
+#include "hash.h"
 /*main functions*/
 void read_directory(const char *filepath, Directory *dir);
 void update_directory(Directory *dir);
@@ -34,10 +35,13 @@ void read_directory(const char *filepath, Directory *dir) {
     dir->files = malloc(sizeof(File));
     dir->folders = NULL;
     strncpy(dir->files[0].name, "[ROOTFS]", 9);
+    strncpy(dir->path, "[ROOTFS]", 9);
+    ht_insert(&state.ht, dir, get_hash("[ROOTFS]"));
     dir->files[0].type = 'z';
     return;
   }
   dir->parent = NULL;
+  ht_insert(&state.ht, dir, get_hash(dir->path));
  
   int fCount = 0;
   int dCount = 0;
@@ -88,6 +92,7 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (free_src_dir) { 
     if (dir->parent->folderCount > dir->parent->selected) /*if not root dir*/
       dir->parent->folders[dir->parent->selected].subdir = NULL;
+    ht_delete_element(&state.ht, dir->path);
     free(*dirptr);
     *dirptr = NULL;
   }
@@ -161,7 +166,7 @@ int last_slash_index(char *path) {
 *   root<--dir<----dir<----current            */
 Directory *init_directories(char *currentPath, Directory **rootdir) {
   /*if the current path IS root*/
-  if(strncmp(currentPath, "/", 2) == 0) {
+  if (strncmp(currentPath, "/", 2) == 0) {
     Directory *root = *rootdir;
     memset(root->path, '\0', MAXPATHNAME);
     strncpy(root->path, "/", 2);

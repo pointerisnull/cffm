@@ -56,6 +56,8 @@
 
 #define DATE_FORMAT "%a %Y-%m-%d %H:%M:%S %Z"
 
+#include "hash.h"
+
 typedef struct State {
   short isRunning;
   short currentTab; /* to be implemented */
@@ -64,6 +66,8 @@ typedef struct State {
   short showHidden;
   short showBorder;
   short shiftPos;
+  /*directory hashtable*/
+  Table ht;
 } State;
 
 extern State state;

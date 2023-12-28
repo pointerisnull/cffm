@@ -10,6 +10,11 @@
 #include "data.h"
 #include "config.h"
 
+/*main function defs*/
+void get_updates(Display *dis);
+Display *init_display(Directory *dir);
+void update_display(Display *dis, Directory **dir);
+void kill_display(Display *dis);
 /*utility functions*/
 void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, const char *buffer);
 char *get_file_preview(char *filePath);
@@ -384,6 +389,12 @@ void update_display(Display *dis, Directory **dirptr) {
 }
 
 void kill_display(Display *dis) {
+  delwin(dis->mainWin);
+  delwin(dis->leftWin);
+  delwin(dis->rightWin);
+  delwin(dis->previewWin);
+  delwin(dis->cmdWin);
+
   free(dis);
 	endwin();
 }

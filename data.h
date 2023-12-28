@@ -45,6 +45,7 @@ struct Directory {
   int fileCount;
   int selected;
   int broken;
+  unsigned int ht_index;
 };
 
 Directory *init_directories(char *path, Directory **rootdir);

@@ -3,11 +3,12 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.0 (indev)"
+#define VERSION "v.0.5.1 (indev)"
 
+#include "config.h"
+#include "hash.h"
 #include "data.h"
 #include "display.h"
-#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@
 
 void assign_settings();
 void init_program_state();
+void free_data();
 State state;
 
 int main(int argc,  char *argv[]) {
@@ -37,36 +39,75 @@ int main(int argc,  char *argv[]) {
   
   init_program_state();
   if (current_path[0] == '\0') getcwd(current_path, MAXPATHNAME);
+
   Directory *root = malloc(sizeof(Directory));
   Directory *directory = init_directories(current_path, &root);
-
+  
   Display *window = init_display(directory);
-
+  
   while(state.isRunning) {
     get_updates(window);
     update_display(window, &directory);
   }
-
+  
 	kill_display(window);
-  free(root->parent->files);
-  free(root->parent);
-  if (strncmp(directory->path, "/", 2) != 0) 
-    free_directory_tree(&directory, 1);
-  else directory = NULL;
-  free_directory_tree(&root, 1);
-
-  if (directory != NULL || root != NULL) 
-    printf("Leaky Memory!\n");
-  else 
-    printf("All data freed correctly.\n");
-
+  /*
+  printf("%s\n\n", directory->path);
+  int i;
+  for (i = 0; i < HASHTABLE_SIZE; i++) {
+    if (state.ht.entries[i].dir == NULL) {
+      printf("%d: %s\n", i, "____");
+    } else {
+      ht_entry *current = &state.ht.entries[i];
+      printf("%d: ", i);
+      while (current != NULL) {
+        Directory *dir = current->dir;
+        printf("%s ->", dir->path);
+        current = current->next;
+      }
+      if (current == NULL) printf(" %s", "end");
+      printf("\n");
+ 
+    }
+  } */
+  printf("Total HashTable Collisions: %d\n", state.ht.collisions);
+  free_data();
+  printf("All data freed correctly.\n");
   return 0;
+}
+
+void free_directory(Directory *dir) {
+  if(dir->folders != NULL) free(dir->folders);
+  if(dir->files != NULL) free(dir->files);
+  if(dir != NULL) free(dir);
+}
+
+void free_data() {
+  /*free all directories*/
+  Table *ht = &state.ht;
+  int i;
+  for (i = 0; i < HASHTABLE_SIZE; i++) {
+    if (ht->entries[i].dir == NULL) /*most likely*/
+      continue;
+    else if (ht->entries[i].next == NULL) /*most likely*/
+      free_directory(ht->entries[i].dir);
+    else { /*worst case, values are in a chain*/
+      ht_entry *current = &ht->entries[i];
+      while (current != NULL) {
+        free_directory(current->dir);
+        current = current->next;
+      }
+    }
+  }
+  /*free the hash table itself*/
+  ht_free(&state.ht);
 }
 
 void init_program_state() {
   state.isRunning = 1;
   state.hasPerformedAction = 0;
   assign_settings(); 
+  ht_init(&state.ht);
 
 }
 
