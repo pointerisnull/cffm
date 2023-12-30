@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = --ansi -lncurses -ltinfo -Wall -Werror -Wextra
+CFLAGS = --ansi -pedantic -lncurses -ltinfo -Wall -Werror -Wextra -D_FORTIFY_SOURCE=2
 
 SRC = main.c data.c display.c hash.c
 BIN = cffm
@@ -18,3 +18,6 @@ install:
 
 uninstall:
 	sudo rm /usr/bin/$(BIN)
+
+preprocess:
+	$(CC) $(CFLAGS) -E -o preproc.i main.c

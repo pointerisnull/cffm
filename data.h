@@ -4,6 +4,8 @@
 #define MAXFILENAME 256
 #define MAXPATHNAME 4096
 
+#include <stdint.h>
+
 typedef struct File File;
 typedef struct Folder Folder;
 typedef struct Directory Directory;
@@ -21,9 +23,9 @@ struct File {
   char path[MAXPATHNAME];
   char type;
   char *preview;
-  unsigned int ownerUID;
-  long long bytesize;
-  long date_unix;
+  uint16_t ownerUID;
+  uint32_t date_unix;
+  uint64_t bytesize;
   char date[64];
   char owner[64];
 };
@@ -41,11 +43,11 @@ struct Directory {
   File *files;
   char name[MAXFILENAME];
   char path[MAXPATHNAME];
-  int folderCount;
-  int fileCount;
-  int selected;
+  uint16_t folderCount;
+  uint16_t fileCount;
+  uint16_t selected;
+  uint16_t ht_index;
   int broken;
-  unsigned int ht_index;
 };
 
 Directory *init_directories(char *path);

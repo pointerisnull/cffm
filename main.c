@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.3 (indev)"
+#define VERSION "v.0.5.4 (indev)"
 
 #include "config.h"
 #include "hash.h"
@@ -21,6 +21,9 @@ void free_data();
 State state;
 
 int main(int argc,  char *argv[]) {
+  Directory *directory;
+  Display *window;
+  
   char current_path[MAXPATHNAME] = {'\0'};
   if (argc > 1) {
     if ((strncmp(argv[1], "-v", 3) == 0) || (strncmp(argv[1], "--version", 10) == 0))
@@ -35,13 +38,13 @@ int main(int argc,  char *argv[]) {
       printf("CFFM Useage\n\nHelp:\n\t-h\n\t--help\nInfo:\n\t-v\n\t--version\nOpen:\n\tcffm /path/to/dir\n\n");
     return 0;
   }
-  main:
-  
+  main: ;
+
   init_program_state();
   if (current_path[0] == '\0') getcwd(current_path, MAXPATHNAME);
 
-  Directory *directory = init_directories(current_path);
-  Display *window = init_display(directory);
+  directory = init_directories(current_path);
+  window = init_display(directory);
   
   while(state.isRunning) {
     get_updates(window);

@@ -149,16 +149,19 @@ void read_selected(Directory *temp) {
 
 char *get_file_preview(char *filePath) {
   FILE *fp = fopen(filePath, "r");
+  int length;
+  int i = 0;
+  char c;
+  char *buffer;
+
   if (fp == NULL) return NULL;
 
   fseek(fp, 0, SEEK_END);
-  int length = ftell(fp);
+  length = ftell(fp);
   fseek(fp, 0, SEEK_SET);
   if (length > MAXPREVIEWSIZE) length = MAXPREVIEWSIZE;
 
-  char *buffer = malloc(sizeof(char) * length+1);
-  char c;
-  int i = 0;
+  buffer = malloc(sizeof(char) * length+1);
   while ( (c = fgetc(fp)) != EOF && ftell(fp) < length ) {
     buffer[i] = c;
     i++;
@@ -261,19 +264,19 @@ void get_updates(Display *dis) {
 
 void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, const char *line_buffer) {
   switch (mode) {
-    case DIR_MODE:
+    case DIR_MODE: {
       /*draws the normal directory window*/
-      werase(win);
-      char buffer[MAXLINEBUFFER];
       int shiftview = 0;
+      char buffer[MAXLINEBUFFER] = {0};
+      werase(win);
       /* total files > window height */
       if ((dir->folderCount+dir->fileCount > height-1-2*state.showBorder) 
       && (dir->selected+state.shiftPos > height-1-2*state.showBorder-1)) 
         shiftview = dir->selected+state.shiftPos - height+1+2*state.showBorder;
       if (width-1 > 0) {
         /*window folders*/
-        wattron(win, COLOR_PAIR(DIRCOLOR));
         int i;
+        wattron(win, COLOR_PAIR(DIRCOLOR));
         for (i = 0; i < dir->folderCount; i++) {
           strncpy(buffer, dir->folders[i].name,width-1-state.showBorder);
           buffer[strlen(buffer)] = '\0';
@@ -310,6 +313,7 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
       }
       wrefresh(win);
       break;
+    }
     case PREVIEW_MODE:
       /*display a file preview*/
       werase(win);
@@ -320,7 +324,7 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
         if (dir->files[dir->selected - dir->folderCount].preview != NULL) 
           mvwprintw(win, 0, 0, "%s", dir->files[dir->selected - dir->folderCount].preview);
         else
-          mvwprintw(win, 0, 0, "%s\nOwner: %s\nSize: %lld Bytes\nDate: %s\n", 
+          mvwprintw(win, 0, 0, "%s\nOwner: %s\nSize: %ld Bytes\nDate: %s\n", 
               dir->files[dir->selected - dir->folderCount].name,
               dir->files[dir->selected - dir->folderCount].owner,
               dir->files[dir->selected - dir->folderCount].bytesize,
@@ -358,6 +362,7 @@ void update_display(Display *dis, Directory **dirptr) {
   WINDOW *mainWin = dis->mainWin;
   WINDOW *rightWin = dis->rightWin;
   WINDOW *previewWin = dis->previewWin;
+  int key;
  
   erase();
   attron(A_BOLD);
@@ -382,7 +387,7 @@ void update_display(Display *dis, Directory **dirptr) {
     draw_window(previewWin, dis->previewWidth, dis->previewHeight, dir, PREVIEW_MODE, NULL);
   }
   /*wait for user input*/
-  int key = getch();
+  key = getch();
   if (key != ERR)
     handle_input(key, dis, dir, dirptr);
  

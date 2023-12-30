@@ -37,10 +37,11 @@ void ht_insert(Table *ht, void *element, unsigned index) {
     ht->entries[index].dir = element;
   else {
     ht_entry *current = &ht->entries[index];
+    ht_entry *new;
     while (current->next != NULL) {
       current = current->next;
     }
-    ht_entry *new = malloc(sizeof(ht_entry));
+    new = malloc(sizeof(ht_entry));
     ht_new_entry(new);
     new->dir = element;
     current->next = new;
@@ -50,8 +51,11 @@ void ht_insert(Table *ht, void *element, unsigned index) {
 
 int ht_delete_element(Table *ht, char *string) {
   unsigned int index = get_hash(string);
+  Directory *dir;
   if (ht->entries[index].dir == NULL)  return 1;
-  Directory *dir = ht->entries[index].dir;
+  
+  dir = ht->entries[index].dir;
+  
   if (ht->entries[index].next == NULL) {
     /*if directory is only one at index (most likely)*/
     ht->entries[index].dir = NULL;
@@ -67,8 +71,8 @@ int ht_delete_element(Table *ht, char *string) {
     ht_entry *prev = &ht->entries[index];
     ht_entry *current = ht->entries[index].next;
     ht_entry *next = current->next;
-    dir = current->dir;
     int found = 1;
+    dir = current->dir;
     while(found != 0) {
       found = strcmp(dir->path, string);
       if (found == 0) break;
@@ -104,9 +108,9 @@ void ht_free(Table *ht) {
 }
 
 void ht_init(Table *ht) {
+  int i;
   ht->collisions = 0;
   ht->entries = malloc(sizeof(ht_entry)*HASHTABLE_SIZE);
-  int i;
   for(i = 0; i < HASHTABLE_SIZE; i++) {
     ht_new_entry(&ht->entries[i]);
   }
