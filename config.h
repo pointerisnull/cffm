@@ -15,6 +15,7 @@
 #define PREVIEW_MODE  1
 #define BOX_MODE      2
 #define CMD_MODE      3
+#define INFO_MODE     4
 
 /*********************************\
 * set your desired values below.  *

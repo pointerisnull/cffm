@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.4 (indev)"
+#define VERSION "v.0.5.5 (indev)"
 
 #include "config.h"
 #include "hash.h"

@@ -208,15 +208,18 @@ Display *init_display(Directory *dir) {
   dis->leftWin = newwin(LINES-1, dis->leftWinWidth, 1, 0);
   dis->mainWin = newwin(LINES-1, dis->mainWinWidth, 1, dis->leftWinWidth);
   dis->rightWin = newwin(LINES-1, dis->rightWinWidth, 1, COLS/2);
+  dis->titleWin = newwin(LINES-1, dis->width, 0, 0);
   dis->previewWin = newwin(LINES-1, dis->previewWidth, 1, COLS/2+state.showBorder);
   dis->cmdWin = newwin(dis->cmdHeight, dis->cmdWidth, dis->height/2 - 3, dis->width/2 - dis->cmdWidth);
   
   wattron(dis->leftWin, COLOR_PAIR(BORDERCOLOR));
   wattron(dis->mainWin, COLOR_PAIR(BORDERCOLOR));
   wattron(dis->rightWin, COLOR_PAIR(BORDERCOLOR));
+  wattron(dis->titleWin, COLOR_PAIR(TITLECOLOR));
   wattron(dis->mainWin, A_BOLD);
   wattron(dis->leftWin, A_BOLD);
   wattron(dis->rightWin, A_BOLD);
+  wattron(dis->titleWin, A_BOLD);
   wattron(dis->cmdWin, A_BOLD);
 
   if (dir->selected < dir->folderCount && dir->folders[dir->selected].subdir == NULL) {
@@ -251,9 +254,11 @@ void get_updates(Display *dis) {
     wresize(dis->leftWin, dis->height, dis->leftWinWidth);
     wresize(dis->mainWin, dis->height, dis->mainWinWidth);
     wresize(dis->rightWin, dis->height, dis->rightWinWidth);
+    wresize(dis->titleWin, 1, dis->width);
     wresize(dis->previewWin, dis->previewHeight, dis->previewWidth);
     wresize(dis->cmdWin, dis->cmdHeight, dis->cmdWidth);
 
+    mvwin(dis->titleWin, 0, 0);
     mvwin(dis->leftWin, 1, 0);
     mvwin(dis->mainWin, 1, dis->leftWinWidth);
     mvwin(dis->rightWin, 1, w.ws_col/2);
@@ -350,6 +355,16 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
       mvwprintw(win, 1, 1, "%s_", line_buffer);
       wrefresh(win);
       break;
+    case INFO_MODE:
+      werase(win);
+      attron(A_BOLD);
+      attron(COLOR_PAIR(TITLECOLOR));
+      mvwprintw(win, 0, 0, "%s", line_buffer);
+      attroff(COLOR_PAIR(TITLECOLOR));
+      attroff(A_BOLD);
+      wrefresh(win);
+      break;
+      break;
     default:
       break;
   }
@@ -361,21 +376,15 @@ void update_display(Display *dis, Directory **dirptr) {
   WINDOW *leftWin = dis->leftWin;
   WINDOW *mainWin = dis->mainWin;
   WINDOW *rightWin = dis->rightWin;
+  WINDOW *titleWin = dis->titleWin;
   WINDOW *previewWin = dis->previewWin;
   int key;
- 
-  erase();
-  attron(A_BOLD);
-  attron(COLOR_PAIR(TITLECOLOR));
   /*print currently selected directory path*/
   if (dir->selected < dir->folderCount)
-    printw("%s", dir->folders[dir->selected].path);
+    draw_window(titleWin, dis->width, 1, dir, INFO_MODE, dir->folders[dir->selected].path);
   else if (dir->selected < (dir->folderCount + dir->fileCount))
-    printw("%s", dir->files[dir->selected - dir->folderCount].path);
-
-  attroff(COLOR_PAIR(TITLECOLOR));
-  attroff(A_BOLD);
-  refresh();
+    draw_window(titleWin, dis->width, 1, dir, INFO_MODE, dir->files[dir->selected - dir->folderCount].path);
+  /*refresh();*/
   /*draw windows*/
   draw_window(mainWin, dis->mainWinWidth, dis->height, dir, DIR_MODE, NULL);
   draw_window(leftWin, dis->leftWinWidth, dis->height, top, DIR_MODE, NULL);
@@ -387,13 +396,16 @@ void update_display(Display *dis, Directory **dirptr) {
     draw_window(previewWin, dis->previewWidth, dis->previewHeight, dir, PREVIEW_MODE, NULL);
   }
   /*wait for user input*/
-  key = getch();
+  key = wgetch(mainWin);
   if (key != ERR)
     handle_input(key, dis, dir, dirptr);
  
+  erase();
 }
 
 void kill_display(Display *dis) {
+  delwin(dis->root);
+  delwin(dis->titleWin);
   delwin(dis->mainWin);
   delwin(dis->leftWin);
   delwin(dis->rightWin);

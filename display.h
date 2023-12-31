@@ -9,6 +9,7 @@
 
 typedef struct Display {
   WINDOW *root;
+  WINDOW *titleWin;
   WINDOW *leftWin;
   WINDOW *mainWin;
   WINDOW *rightWin;
