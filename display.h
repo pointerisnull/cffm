@@ -9,22 +9,19 @@
 
 typedef struct Display {
   WINDOW *root;
-  WINDOW *titleWin;
-  WINDOW *leftWin;
-  WINDOW *mainWin;
-  WINDOW *rightWin;
-  WINDOW *previewWin;
+  WINDOW *titlew;
+  WINDOW *leftw;
+  WINDOW *mainw;
+  WINDOW *rightw;
+  WINDOW *previeww;
  
-  int mainWinWidth;
-  int leftWinWidth;
-  int rightWinWidth;
-  int previewWidth;
-  int previewHeight;
+  int mainw_width;
+  int leftw_width;
+  int rightw_width;
+  int preview_width;
+  int preview_height;
   int width, height;
-
-  char pinned[64][MAXPATHNAME];
-  int pinc;
-
+ 
 } Display;
 
 void get_updates(Display *dis);

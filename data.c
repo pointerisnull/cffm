@@ -20,7 +20,7 @@ void free_directory_tree(Directory **dir, int free_src_dir);
 int open_and_read(const char *filepath, Directory *dir);
 int is_directory(const char *path);
 void get_file_stats(File *file, char *path);
-void get_dir_counts(int *folderCount, int *fileCount, const char *fp);
+void get_dir_counts(int *folderc, int *filec, const char *fp);
 void sort_folders(Folder *folders, int count);
 void sort_files(File *files, int count);
 
@@ -34,8 +34,8 @@ void read_directory(const char *filepath, Directory *dir) {
     strncpy(dir->path, filepath, MAXPATHNAME);
   } else {
     dir->selected = 0;
-    dir->folderCount = 0;
-    dir->fileCount = 1;
+    dir->folderc = 0;
+    dir->filec = 1;
     dir->files = malloc(sizeof(File));
     dir->folders = NULL;
     strncpy(dir->files[0].name, "[ROOTFS]", 9);
@@ -49,16 +49,16 @@ void read_directory(const char *filepath, Directory *dir) {
   ht_insert(&state.ht, dir, dir->ht_index);
 
   get_dir_counts(&dCount, &fCount, filepath);
-  dir->folderCount = dCount;
-  dir->fileCount = fCount;
+  dir->folderc = dCount;
+  dir->filec = fCount;
  
-  dir->folders = malloc(sizeof(Folder)*dir->folderCount+1);
-  dir->files = malloc(sizeof(File)*dir->fileCount+1);
+  dir->folders = malloc(sizeof(Folder)*dir->folderc+1);
+  dir->files = malloc(sizeof(File)*dir->filec+1);
 
   if (open_and_read(filepath, dir) != 0) return;
     /*finishing touches*/
-  sort_folders(dir->folders, dir->folderCount);
-  sort_files(dir->files, dir->fileCount);
+  sort_folders(dir->folders, dir->folderc);
+  sort_files(dir->files, dir->filec);
   dir->broken = 0;
   dir->selected = 0;
 }
@@ -82,23 +82,23 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (*dirptr == NULL) return;
   
   dir = *dirptr;
-  for (i = 0; i < dir->folderCount; i++)
+  for (i = 0; i < dir->folderc; i++)
     if (dir->folders[i].subdir != NULL) 
       free_directory_tree(&dir->folders[i].subdir, 1);
 
   if (dir->folders != NULL) free(dir->folders);
   dir->folders = NULL;
-  dir->folderCount = 0;
+  dir->folderc = 0;
   if (dir->files != NULL) {
-    for (i = 0; i < dir->fileCount; i++)
+    for (i = 0; i < dir->filec; i++)
       if (dir->files[i].preview != NULL) free(dir->files[i].preview);
     free(dir->files);
   }
   dir->files = NULL;
-  dir->fileCount = 0;
+  dir->filec = 0;
   /*if freeing the source directory itself, free it*/
   if (free_src_dir) { 
-    if (dir->parent->folderCount > dir->parent->selected) /*if not root dir*/
+    if (dir->parent->folderc > dir->parent->selected) /*if not root dir*/
       dir->parent->folders[dir->parent->selected].subdir = NULL;
     free(*dirptr);
     *dirptr = NULL;
@@ -106,7 +106,6 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   /*remove directory from hashmap*/
   ht_delete_element(&state.ht, dir->path);
 }
-
 /*populates the dir struct*/
 int open_and_read(const char *filepath, Directory *dir) {
   int d = 0; 
@@ -211,7 +210,7 @@ Directory *init_directories(char *currentPath) {
     if (slashCount > 1) {
       Directory *parent = malloc(sizeof(Directory));
       read_directory(temp, parent);
-      for (s = 0; s < parent->folderCount; s++) {
+      for (s = 0; s < parent->folderc; s++) {
         if (strcmp(indexer->path, parent->folders[s].path) == 0) {
           parent->folders[s].subdir = indexer;
           parent->selected = s;
@@ -231,7 +230,7 @@ Directory *init_directories(char *currentPath) {
       memset(root->path, '\0', MAXPATHNAME);
       strncpy(root->path, "/", 2);
       read_directory("/", root);
-      for (s = 0; s < root->folderCount; s++) {
+      for (s = 0; s < root->folderc; s++) {
         if (strcmp(indexer->path, root->folders[s].path) == 0) {
           root->folders[s].subdir = indexer;
           root->selected = s;
@@ -242,7 +241,6 @@ Directory *init_directories(char *currentPath) {
       read_directory(NULL, root->parent);
     }
   }
-
   return current;
 }
 /*utility definitions*/
@@ -314,17 +312,15 @@ void get_file_stats(File *file, char *path) {
   time = (time_t) file->date_unix;
   ts = *localtime(&time);
   strftime(file->date, sizeof(file->date), DATE_FORMAT, &ts);
-
 }
 
-int is_directory(const char *path)
-{
+int is_directory(const char *path) {
     struct stat pathstat;
     stat(path, &pathstat);
     return S_ISDIR(pathstat.st_mode);
 }
 /*returns the number of folders and files in a directory*/
-void get_dir_counts(int *folderCount, int *fileCount, const char *fp) {
+void get_dir_counts(int *folderc, int *filec, const char *fp) {
   char filepath[MAXPATHNAME];
   char temp[MAXPATHNAME];
   struct dirent *de = NULL;
@@ -345,9 +341,9 @@ void get_dir_counts(int *folderCount, int *fileCount, const char *fp) {
         strncpy(temp, filepath, MAXPATHNAME);
         strcat(temp, de->d_name);
         if (is_directory(temp))
-          *folderCount+=1;
+          *folderc+=1;
         else
-          *fileCount+=1;
+          *filec+=1;
       }
     }
   } else {
@@ -357,9 +353,9 @@ void get_dir_counts(int *folderCount, int *fileCount, const char *fp) {
         strcpy(temp, filepath);
         strcat(temp, de->d_name);
         if (is_directory(temp)) {
-          *folderCount+=1;
+          *folderc+=1;
         } else {
-          *fileCount+=1;
+          *filec+=1;
         }
       }
     }

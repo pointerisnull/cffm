@@ -16,17 +16,17 @@
 #define BOX_MODE      2
 #define CMD_MODE      3
 #define INFO_MODE     4
-#define PIN_MODE      5
+#define RN_MODE       5
+#define CONFIRM_MODE  6
 
 /*********************************\
 * set your desired values below.  *
 \*********************************/
-
+/*Colors*/
 #define BACKGROUND    TERMCOLOR
 #define BORDERCOLOR   PURPLE
 #define CURSORCOLOR   PURPLE
 #define TITLECOLOR    WHITE
-#define CMDCOLOR      GREEN
 #define DIRCOLOR      PURPLE 
 #define ROOTCOLOR     RED
 #define FILECOLOR     WHITE
@@ -34,11 +34,14 @@
 #define EXECOLOR      RED
 #define IMAGECOLOR    CYAN 
 #define MEDIACOLOR    BLUE
-
+#define CMDCOLOR      GREEN
+#define VMCOLOR       WHITE /*selected files' color*/
+/*Settings*/
 #define SHOWHIDDENDEFAULT 0
 #define SHOWBORDERDEFAULT 1
-/*cursor's row threshold before the file list scrolls up*/
-#define SHIFTSIZE 16
+#define SHIFTSIZE 16 /*cursor's row threshold before the file list scrolls up*/
+#define ALLOW_DELETE 0 /*by default deleting is disabled*/
+
 /*key bindings*/
 #define key_up          'k'
 #define key_down        'j'
@@ -46,8 +49,10 @@
 #define key_right       'l' /*down dir*/
 #define key_update      'u' /*update directory*/
 #define key_quit        'q'
+#define key_esc          27 /*escape charater*/
+#define key_space       ' '
 #define key_cmd         ':'
-#define key_pin         'f'
+#define key_pin         'f' /*coming soon*/
 #define key_select      's'
 #define key_rename      't'
 #define key_cut         'x'
@@ -59,21 +64,4 @@
 #define key_show_border 'b'
 
 #define DATE_FORMAT "%a %Y-%m-%d %H:%M:%S %Z"
-
-#include "hash.h"
-
-typedef struct State {
-  short is_running;
-  short current_tab; /* to be implemented */
-  short visual_mode;
-  /*settings*/
-  short show_hidden;
-  short show_border;
-  short shift_pos;
-  /*directory hashtable*/
-  Table ht;
-} State;
-
-extern State state;
-
 #endif  

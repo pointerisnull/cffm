@@ -1,9 +1,9 @@
 /*******************************\
 * CONSOLE-FRIENDLY FILE MANAGER *
 *                               *
-*   -Bdon 2023                  *
+*   -Bdon 2023-2024             *
 \*******************************/
-#define VERSION "v.0.5.6 (indev)"
+#define VERSION "v.1.0.0"
 
 #include "config.h"
 #include "hash.h"
@@ -62,7 +62,7 @@ void free_directory(Directory *dir) {
   if (dir->folders != NULL) free(dir->folders);
   if (dir->files != NULL) {
     int i;
-    for (i = 0; i < dir->fileCount; i++)
+    for (i = 0; i < dir->filec; i++)
       if (dir->files[i].preview != NULL) free(dir->files[i].preview);
     free(dir->files);
   }
@@ -76,7 +76,7 @@ void free_data() {
   for (i = 0; i < HASHTABLE_SIZE; i++) {
     if (ht->entries[i].dir == NULL) /*most likely*/
       continue;
-    else if (ht->entries[i].next == NULL) { /*most likely*/
+    else if (ht->entries[i].next == NULL) { /*likely*/
       free_directory(ht->entries[i].dir);
       ht->entries[i].dir = NULL;
     }
@@ -97,6 +97,14 @@ void init_program_state() {
   state.is_running = 1;
   assign_settings(); 
   ht_init(&state.ht);
+  state.visual_mode = 0;
+  memset(state.cb.folderptr, 0, MAXSELECTED-1);
+  memset(state.cb.fileptr, 0, MAXSELECTED-1);
+  state.cb.filec = 0;
+  state.cb.folderc = 0;
+  state.cutting = 0;
+  state.copying = 0;
+  state.deleting = 0;
 }
 
 void assign_settings() {
