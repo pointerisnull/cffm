@@ -16,6 +16,7 @@
 #define BOX_MODE      2
 #define CMD_MODE      3
 #define INFO_MODE     4
+#define PIN_MODE      5
 
 /*********************************\
 * set your desired values below.  *
@@ -25,6 +26,7 @@
 #define BORDERCOLOR   PURPLE
 #define CURSORCOLOR   PURPLE
 #define TITLECOLOR    WHITE
+#define CMDCOLOR      GREEN
 #define DIRCOLOR      PURPLE 
 #define ROOTCOLOR     RED
 #define FILECOLOR     WHITE
@@ -45,6 +47,7 @@
 #define key_update      'u' /*update directory*/
 #define key_quit        'q'
 #define key_cmd         ':'
+#define key_pin         'f'
 #define key_select      's'
 #define key_rename      't'
 #define key_cut         'x'
@@ -60,13 +63,13 @@
 #include "hash.h"
 
 typedef struct State {
-  short isRunning;
-  short currentTab; /* to be implemented */
-  short hasPerformedAction;
+  short is_running;
+  short current_tab; /* to be implemented */
+  short visual_mode;
   /*settings*/
-  short showHidden;
-  short showBorder;
-  short shiftPos;
+  short show_hidden;
+  short show_border;
+  short shift_pos;
   /*directory hashtable*/
   Table ht;
 } State;

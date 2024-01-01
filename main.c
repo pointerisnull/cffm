@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023                  *
 \*******************************/
-#define VERSION "v.0.5.5 (indev)"
+#define VERSION "v.0.5.6 (indev)"
 
 #include "config.h"
 #include "hash.h"
@@ -46,20 +46,26 @@ int main(int argc,  char *argv[]) {
   directory = init_directories(current_path);
   window = init_display(directory);
   
-  while(state.isRunning) {
+  while (state.is_running) {
     get_updates(window);
     update_display(window, &directory);
   }
   
 	kill_display(window);
   free_data();
+  printf("CFFM shutdown successfully.\n");
   return 0;
 }
 
 void free_directory(Directory *dir) {
   if (dir == NULL) return;
   if (dir->folders != NULL) free(dir->folders);
-  if (dir->files != NULL) free(dir->files);
+  if (dir->files != NULL) {
+    int i;
+    for (i = 0; i < dir->fileCount; i++)
+      if (dir->files[i].preview != NULL) free(dir->files[i].preview);
+    free(dir->files);
+  }
   if (dir != NULL) free(dir);
 }
 
@@ -88,14 +94,13 @@ void free_data() {
 }
 
 void init_program_state() {
-  state.isRunning = 1;
-  state.hasPerformedAction = 0;
+  state.is_running = 1;
   assign_settings(); 
   ht_init(&state.ht);
 }
 
 void assign_settings() {
-  state.showHidden = SHOWHIDDENDEFAULT;
-  state.showBorder = SHOWBORDERDEFAULT;
-  state.shiftPos = SHIFTSIZE;
+  state.show_hidden = SHOWHIDDENDEFAULT;
+  state.show_border = SHOWBORDERDEFAULT;
+  state.shift_pos = SHIFTSIZE;
 }

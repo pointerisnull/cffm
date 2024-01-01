@@ -14,16 +14,16 @@ typedef struct Display {
   WINDOW *mainWin;
   WINDOW *rightWin;
   WINDOW *previewWin;
-  WINDOW *cmdWin;
  
   int mainWinWidth;
   int leftWinWidth;
   int rightWinWidth;
   int previewWidth;
   int previewHeight;
-  int cmdWidth;
-  int cmdHeight;
   int width, height;
+
+  char pinned[64][MAXPATHNAME];
+  int pinc;
 
 } Display;
 

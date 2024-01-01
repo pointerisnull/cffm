@@ -3,6 +3,7 @@
 
 #define MAXFILENAME 256
 #define MAXPATHNAME 4096
+#define MAXPREVIEWSIZE 4096
 
 #include <stdint.h>
 
@@ -27,7 +28,6 @@ struct File {
   uint32_t date_unix;
   uint64_t bytesize;
   char date[64];
-  char owner[64];
 };
 
 struct Folder {

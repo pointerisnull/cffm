@@ -89,7 +89,11 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   if (dir->folders != NULL) free(dir->folders);
   dir->folders = NULL;
   dir->folderCount = 0;
-  if (dir->files != NULL) free(dir->files);
+  if (dir->files != NULL) {
+    for (i = 0; i < dir->fileCount; i++)
+      if (dir->files[i].preview != NULL) free(dir->files[i].preview);
+    free(dir->files);
+  }
   dir->files = NULL;
   dir->fileCount = 0;
   /*if freeing the source directory itself, free it*/
@@ -117,7 +121,7 @@ int open_and_read(const char *filepath, Directory *dir) {
   memset(readPath, '\0', MAXPATHNAME);
   /*now read it*/
   isroot = strncmp(filepath, "/", 2);
-  if (state.showHidden == 0) {
+  if (state.show_hidden == 0) {
     while ((de = readdir(dr)) != NULL) {
       if (de->d_name[0] != '.') {
         strncpy(readPath, filepath, MAXPATHNAME);
@@ -297,7 +301,6 @@ void sort_files(File *files, int count) {
 
 void get_file_stats(File *file, char *path) {
   struct stat filestat;
-  struct passwd *pwd;
   struct tm ts;
   time_t time;
   
@@ -308,9 +311,6 @@ void get_file_stats(File *file, char *path) {
   file->bytesize = (uint64_t) filestat.st_size;
   file->date_unix = filestat.st_mtime;
 
-  pwd = getpwuid(file->ownerUID);
-  if (pwd != NULL) strcpy(file->owner, pwd->pw_name);
-  
   time = (time_t) file->date_unix;
   ts = *localtime(&time);
   strftime(file->date, sizeof(file->date), DATE_FORMAT, &ts);
@@ -337,7 +337,7 @@ void get_dir_counts(int *folderCount, int *fileCount, const char *fp) {
   if (dir == NULL) return;
   if (strncmp(fp, "/", 2) != 0) strncat(filepath, "/", 2);
   
-  if (state.showHidden == 0) {
+  if (state.show_hidden == 0) {
     while ((de = readdir(dir)) != NULL) {
       if (de->d_name[0] != '.') {
         

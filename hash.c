@@ -73,7 +73,7 @@ int ht_delete_element(Table *ht, char *string) {
     ht_entry *next = current->next;
     int found = 1;
     dir = current->dir;
-    while(found != 0) {
+    while (found != 0) {
       found = strcmp(dir->path, string);
       if (found == 0) break;
       prev = current;
@@ -111,7 +111,7 @@ void ht_init(Table *ht) {
   int i;
   ht->collisions = 0;
   ht->entries = malloc(sizeof(ht_entry)*HASHTABLE_SIZE);
-  for(i = 0; i < HASHTABLE_SIZE; i++) {
+  for (i = 0; i < HASHTABLE_SIZE; i++) {
     ht_new_entry(&ht->entries[i]);
   }
 }
