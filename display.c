@@ -16,7 +16,7 @@ void update_display(Display *dis, Directory **dir);
 void kill_display(Display *dis);
 /*utility functions*/
 void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, const char *buffer);
-char *get_file_preview(char *filePath);
+char *get_file_preview(File *file);
 void read_selected(Directory *dir);
 int cmd_window(WINDOW *win, int width, int height, Directory *current, int MODE);
 void exec_cmd(const char *buffer);
@@ -261,26 +261,25 @@ void read_selected(Directory *temp) {
   /*if only file, get preview*/
   } else if (temp->folderc == 0 && temp->filec > 0 
   && temp->files[temp->selected].preview == NULL) {
-    temp->files[temp->selected].preview = get_file_preview(temp->files[temp->selected].path);
+    temp->files[temp->selected].preview = get_file_preview(&temp->files[temp->selected]);
   }
 }
 
-char *get_file_preview(char *filePath) {
-  FILE *fp = fopen(filePath, "r");
-  int length;
+char *get_file_preview(File *file) {
+  FILE *fp = NULL;
+  uint64_t length;
   int i = 0;
   char c;
   char *buffer;
 
+  if (file->path != NULL) fp = fopen(file->path, "r");
   if (fp == NULL) return NULL;
 
-  fseek(fp, 0, SEEK_END);
-  length = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
+  length = file->bytesize;
   if (length > MAXPREVIEWSIZE) length = MAXPREVIEWSIZE;
 
   buffer = malloc(sizeof(char) * length+1);
-  while ( (c = fgetc(fp)) != EOF && ftell(fp) < length ) {
+  while ((c = fgetc(fp)) != EOF && (uint64_t) i < length) {
     buffer[i] = c;
     i++;
   }
@@ -289,10 +288,9 @@ char *get_file_preview(char *filePath) {
     free(buffer);
     fclose(fp);
     return NULL;
-  } 
-  buffer[i] = '\0';
-	
+  }
   fclose(fp);
+  buffer[i] = '\0';
 
   return buffer;
 }
@@ -462,7 +460,7 @@ void draw_window(WINDOW *win, int width, int height, Directory *dir, int mode, c
       if (dir->selected > dir->folderc-1 && dir->selected < dir->folderc + dir->filec) {
         wattron(win, COLOR_PAIR(TEXTCOLOR));
         if (dir->files[dir->selected - dir->folderc].preview == NULL) 
-          dir->files[dir->selected - dir->folderc].preview = get_file_preview(dir->files[dir->selected - dir->folderc].path);
+          dir->files[dir->selected - dir->folderc].preview = get_file_preview(&dir->files[dir->selected - dir->folderc]);
         if (dir->files[dir->selected - dir->folderc].preview != NULL) 
           mvwprintw(win, 0, 0, "%s", dir->files[dir->selected - dir->folderc].preview);
         else

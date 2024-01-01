@@ -38,7 +38,7 @@
 #define VMCOLOR       WHITE /*selected files' color*/
 /*Settings*/
 #define SHOWHIDDENDEFAULT 0
-#define SHOWBORDERDEFAULT 1
+#define SHOWBORDERDEFAULT 0
 #define SHIFTSIZE 16 /*cursor's row threshold before the file list scrolls up*/
 #define ALLOW_DELETE 0 /*by default deleting is disabled*/
 

@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023-2024             *
 \*******************************/
-#define VERSION "v.1.0.0"
+#define VERSION "v.1.0.1"
 
 #include "config.h"
 #include "hash.h"
