@@ -1,4 +1,5 @@
 # Console-Friendly File Manager
+![CFFM](res/cffm1.png "CFFM on the desktop")
 
 CFFM is a minimalist terminal-based file manager. Heavily inspired by similar terminal based file managers such as `ranger` and `lf`, CFFM seeks to provide a clean, snappy, and customizable file managing experience while adherign to a minimalist, Unix-like philosophy.
 
