@@ -36,5 +36,14 @@ Installing:
 # Configuration
 You can modify any `#define` value in `config.h` to your liking. When done, simply re-compile and run.
 
+## Runtime customization
+By pressing `b` by default you can show/hide the border. Of course you can configure this to your liking in `config.h`.
+
+![CFFM](res/cffm_border.png "border enabled")
+
+versus
+
+![CFFM](res/cffm_border.png "border hidden")
+
 # Philosophy
 CFFM's design philosophy was inspired heavily by the [Suckless Philosophy](https://suckless.org/philosophy/). Whether or not experienced hackers would consider CFFM truely "Suckless" or "KISS" is debatable, however one thing is for sure, and that is that CFFM is minimalist and not bloated. I have been using `ranger` for about a year now, and I couldn't help but notice that it was lagging behind and sometimes not responsive. This is because it was written in python, and was calling external scripts to execute commands. I was interested switching to the file manager `lf`, however it too used external configuration files and building it required installing golang. I always liked Suckless' `dwm` and `st` due to their configuration being compiled directly into the program, as well as for the fact that they are extremely portable and light programs. So, I decided to write my own terminal file manager, with simplicity and portability in mind.
