@@ -27,6 +27,7 @@ struct File {
   char path[MAXPATHNAME];
   char type;
   char *preview;
+  uint32_t inode;
   uint16_t ownerUID;
   uint32_t date_unix;
   uint64_t bytesize;
@@ -37,6 +38,9 @@ struct Folder {
   char name[MAXFILENAME];
   char path[MAXPATHNAME];
   char date[64];
+  uint32_t inode;
+  uint16_t ownerUID;
+  uint32_t date_unix;
   Directory *subdir;
 };
 
@@ -44,7 +48,6 @@ struct Directory {
   Directory *parent;
   Folder *folders;
   File *files;
-  char name[MAXFILENAME];
   char path[MAXPATHNAME];
   uint16_t folderc;
   uint16_t filec;

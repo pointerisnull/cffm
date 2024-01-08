@@ -49,6 +49,20 @@ void ht_insert(Table *ht, void *element, unsigned index) {
   }
 }
 
+void *ht_get_element(Table *ht, char *string) {
+  unsigned int index = get_hash(string);
+  ht_entry *current = &ht->entries[index];
+  Directory *currentdir;
+  if (ht->entries[index].dir == NULL) return NULL;
+  while (current != NULL) {
+    currentdir = (Directory *)current->dir;
+    if (strncmp(currentdir->path, string, strlen(string)) == 0)
+      return currentdir;
+    else current = current->next;
+  }
+  return NULL;
+}
+
 int ht_delete_element(Table *ht, char *string) {
   unsigned int index = get_hash(string);
   Directory *dir;

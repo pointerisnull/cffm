@@ -19,7 +19,7 @@ void free_directory_tree(Directory **dir, int free_src_dir);
 /*utility functions*/
 int open_and_read(const char *filepath, Directory *dir);
 int is_directory(const char *path);
-void get_file_stats(File *file, char *path);
+void get_stats(void *ptr, char *path, int is_file);
 void get_dir_counts(int *folderc, int *filec, const char *fp);
 void sort_folders(Folder *folders, int count);
 void sort_files(File *files, int count);
@@ -46,7 +46,8 @@ void read_directory(const char *filepath, Directory *dir) {
   }
   dir->parent = NULL;
   dir->ht_index = get_hash(dir->path);
-  ht_insert(&state.ht, dir, dir->ht_index);
+  if (ht_get_element(&state.ht, dir->path) == NULL) 
+    ht_insert(&state.ht, dir, dir->ht_index);
 
   get_dir_counts(&dCount, &fCount, filepath);
   dir->folderc = dCount;
@@ -97,14 +98,15 @@ void free_directory_tree(Directory **dirptr, int free_src_dir) {
   dir->files = NULL;
   dir->filec = 0;
   /*if freeing the source directory itself, free it*/
-  if (free_src_dir) { 
+  if (free_src_dir) {
+    /*remove directory from hashmap*/
+    ht_delete_element(&state.ht, dir->path);
+
     if (dir->parent->folderc > dir->parent->selected) /*if not root dir*/
       dir->parent->folders[dir->parent->selected].subdir = NULL;
     free(*dirptr);
     *dirptr = NULL;
   }
-  /*remove directory from hashmap*/
-  ht_delete_element(&state.ht, dir->path);
 }
 /*populates the dir struct*/
 int open_and_read(const char *filepath, Directory *dir) {
@@ -129,10 +131,11 @@ int open_and_read(const char *filepath, Directory *dir) {
         if (is_directory(readPath) == 1) {
           strncpy(dir->folders[d].name, de->d_name, MAXFILENAME);
           strncpy(dir->folders[d].path, readPath, MAXPATHNAME);
+          get_stats(&dir->folders[d], dir->folders[d].path, 0);
           dir->folders[d].subdir = NULL;
           d++;
         } else {
-          get_file_stats(&dir->files[f], readPath);
+          get_stats(&dir->files[f], readPath, 1);
           strncpy(dir->files[f].name, de->d_name, strlen(de->d_name)+1);
           strncpy(dir->files[f].path, readPath, MAXPATHNAME);
           f++;
@@ -149,10 +152,11 @@ int open_and_read(const char *filepath, Directory *dir) {
         if (is_directory(readPath) == 1) {
           strncpy(dir->folders[d].name, de->d_name, MAXFILENAME);
           strncpy(dir->folders[d].path, readPath, MAXPATHNAME);
+          get_stats(&dir->folders[d], dir->folders[d].path, 0);
           dir->folders[d].subdir = NULL;
           d++;
         } else {
-          get_file_stats(&dir->files[f], readPath);
+          get_stats(&dir->files[f], readPath, 1);
           strncpy(dir->files[f].name, de->d_name, strlen(de->d_name)+1);
           strncpy(dir->files[f].path, readPath, MAXPATHNAME);
           f++;
@@ -297,21 +301,35 @@ void sort_files(File *files, int count) {
   }
 }
 
-void get_file_stats(File *file, char *path) {
+void get_stats(void *ptr, char *path, int is_file) {
   struct stat filestat;
   struct tm ts;
   time_t time;
   
   stat(path, &filestat);
-  if (access(path, X_OK) == 0) file->type = 'e';
-  file->preview = NULL;
-  file->ownerUID = filestat.st_uid;
-  file->bytesize = (uint64_t) filestat.st_size;
-  file->date_unix = filestat.st_mtime;
+  if (is_file) {
+    File *file = (File *) ptr;
+    if (access(path, X_OK) == 0) file->type = 'e';
+    file->inode = filestat.st_ino;
+    file->preview = NULL;
+    file->ownerUID = filestat.st_uid;
+    file->bytesize = (uint64_t) filestat.st_size;
+    file->date_unix = filestat.st_mtime;
 
-  time = (time_t) file->date_unix;
-  ts = *localtime(&time);
-  strftime(file->date, sizeof(file->date), DATE_FORMAT, &ts);
+    time = (time_t) file->date_unix;
+    ts = *localtime(&time);
+    strftime(file->date, sizeof(file->date), DATE_FORMAT, &ts);
+  } else if (is_file == 0) {
+    Folder *dir = (Folder *) ptr;
+    dir->inode = filestat.st_ino;
+    dir->ownerUID = filestat.st_uid;
+    /*file->bytesize = (uint64_t) filestat.st_size;*/
+    dir->date_unix = filestat.st_mtime;
+
+    time = (time_t) dir->date_unix;
+    ts = *localtime(&time);
+    strftime(dir->date, sizeof(dir->date), DATE_FORMAT, &ts);
+  }
 }
 
 int is_directory(const char *path) {

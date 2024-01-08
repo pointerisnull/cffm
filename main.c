@@ -3,7 +3,7 @@
 *                               *
 *   -Bdon 2023-2024             *
 \*******************************/
-#define VERSION "v.1.0.1"
+#define VERSION "v.1.0.2"
 
 #include "config.h"
 #include "hash.h"
@@ -23,6 +23,7 @@ State state;
 int main(int argc,  char *argv[]) {
   Directory *directory;
   Display *window;
+  int i;
   
   char current_path[MAXPATHNAME] = {'\0'};
   if (argc > 1) {
@@ -42,6 +43,7 @@ int main(int argc,  char *argv[]) {
 
   init_program_state();
   if (current_path[0] == '\0') getcwd(current_path, MAXPATHNAME);
+  chdir(current_path);
 
   directory = init_directories(current_path);
   window = init_display(directory);
@@ -52,6 +54,26 @@ int main(int argc,  char *argv[]) {
   }
   
 	kill_display(window);
+  
+  printf("%s\n\n", directory->path);
+  for (i = 0; i < HASHTABLE_SIZE; i++) {
+    if (state.ht.entries[i].dir == NULL) {
+      printf("%d: %s\n", i, "____");
+    } else {
+      ht_entry *current = &state.ht.entries[i];
+      printf("%d: ", i);
+      while (current != NULL) {
+        Directory *dir = current->dir;
+        printf("%s ->", dir->path);
+        current = current->next;
+      }
+      if (current == NULL) printf(" %s", "end");
+      printf("\n");
+ 
+    }
+  }
+  printf("Total HashTable Collisions: %d\n", state.ht.collisions);
+
   free_data();
   printf("CFFM shutdown successfully.\n");
   return 0;

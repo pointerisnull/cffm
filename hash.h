@@ -21,6 +21,7 @@ struct Table {
 uint64_t get_hash(char *string);
 void ht_init(Table *ht);
 void ht_insert(Table *ht, void *element, unsigned index);
+void *ht_get_element(Table *ht, char *string);
 int ht_delete_element(Table *ht, char *string);
 void ht_free(Table *ht);
 
