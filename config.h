@@ -40,7 +40,7 @@
 #define SHOWHIDDENDEFAULT 0
 #define SHOWBORDERDEFAULT 0
 #define SHIFTSIZE 16 /*cursor's row threshold before the file list scrolls up*/
-#define ALLOW_DELETE 0 /*by default deleting is disabled*/
+#define ALLOW_DELETE 1 /*by default deleting is disabled*/
 
 /*key bindings*/
 #define key_up          'k'
